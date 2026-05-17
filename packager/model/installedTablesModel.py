@@ -28,10 +28,24 @@ class InstalledTablesModel(Observable):
     def update(self):
         # read Visual Pinball Tables
         self.__tables = []
-        for vpx_file in Path(self.baseModel.visual_pinball_path + "/tables").glob('**/*.vpx'):
-            self.__tables.append({'type': 'vpx', 'name': vpx_file.stem})
-        for vpt_file in Path(self.baseModel.visual_pinball_path + "/tables").glob('**/*.vpt'):
-            self.__tables.append({'type': 'vpt', 'name': vpt_file.stem})
+        
+        # Turn the base directory string into a resilient Path object
+        base_path = Path(self.baseModel.visual_pinball_path)
+        
+        # Try finding uppercase 'Tables', fallback to lowercase 'tables'
+        tables_path = base_path / "Tables"
+        if not tables_path.exists():
+            tables_path = base_path / "tables"
+
+        # Scan the directory if it is valid
+        if tables_path.exists():
+            for vpx_file in tables_path.glob('**/*.vpx'):
+                self.__tables.append({'type': 'vpx', 'name': vpx_file.stem})
+            for vpt_file in tables_path.glob('**/*.vpt'):
+                self.__tables.append({'type': 'vpt', 'name': vpt_file.stem})
+        else:
+            self.logger.error(f"Target tables folder missing at: {tables_path}")
+
         self.__tables.sort(key=lambda table: table['name'].upper())
         self.notify_all(self, events=['<<UPDATE TABLES>>'], tables=self.__tables)  # update listeners
 
@@ -116,7 +130,7 @@ class InstalledTablesModel(Observable):
         self.logger.info("--[Done]------------------")
         self.notify_all(self, events=['<<END_ACTION>>', '<<ENABLE_ALL>>'],
                         tables=self.__selectedTable)  # update listeners
-        self.baseModel.packagedTablesModel.reload()
+        self.baseModel.packagedTablesModel.update()
 
     def delete_tables(self, viewer):
         self.notify_all(self, events=['<<DISABLE_ALL>>', '<<BEGIN_ACTION>>'])  # update listeners

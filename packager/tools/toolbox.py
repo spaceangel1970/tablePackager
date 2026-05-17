@@ -14,7 +14,6 @@ import math
 import datetime
 import time
 import json
-from datetime import datetime
 from time import mktime
 
 from pathlib import Path
@@ -139,8 +138,7 @@ def convert_size(size_bytes):
 
 # UTC Time -> '2019-01-28T22:16:15.631186+00:00'
 def utcTime2IsoStr():
-    return datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc).isoformat()
-
+    return datetime.datetime.now(datetime.timezone.utc).isoformat()
 
 def strIsoUTCTime2DateTime(strIsoTime):
     """ '2019-01-28T22:16:15.631186+00:00' -> datetime"""

@@ -4,20 +4,17 @@ import json
 
 class Config:
     def __init__(self):
+        # Explicit paths mapping directly to your active Documents project space
         self.__data = {
-            'working_dir': os.path.expanduser("~/tablePackager"),
-            'visual_pinball_path': 'c:/visual pinball',
-            'pinballX_path': 'c:/pinballX',
-            'pinupSystem_path': 'c:/PinUPSystem',
-            'db_path': os.path.expanduser("~/tablePackager") + '/database/pinball_machines.json',
-            'manufacturer_path': os.path.expanduser("~/tablePackager") + '/database/manufacturer.json',
+            'working_dir': 'C:/Users/DAVID/Documents/tablePackager',
+            'visual_pinball_path': 'C:/vPinball/VisualPinball',
+            'pinballX_path': 'C:/pinballX',
+            'pinupSystem_path': 'C:/vPinball/PinUPSystem',
+            'db_path': 'C:/Users/DAVID/Documents/tablePackager/packager/database/puplookup.csv',
+            'manufacturer_path': 'C:/Users/DAVID/Documents/tablePackager/packager/database/manufacturer.json',
             'font': ('Helvetica', 10)
         }
-        self.load() # TODO: a revoir
-        if 'db_path' not in self.__data: # for compatibility
-            self.__data['db_path']=os.path.expanduser('~/tablePackager') + '/database/pinball_machines.json'
-        if 'manufacturer_path' not in self.__data: # for compatibility
-            self.__data['manufacturer_path']=os.path.expanduser('~/tablePackager') + '/database/manufacturer.json'
+        self.load()
 
     def get(self, var_name):
         if var_name == 'package_extension':
@@ -38,13 +35,16 @@ class Config:
             return
         try:
             with open(path) as data_file:
-                self.__data = json.load(data_file)
-        except:
-            raise Exception("Manifest not found at %s" % (path + '/' + self.name + '/' + self.filename))
+                loaded_data = json.load(data_file)
+                for key, value in loaded_data.items():
+                    self.__data[key] = value
+        except Exception as e:
+            print(f"Warning: Could not load config.json ({e}). Using default setup.")
+            self.save()
 
     def save(self):
         try:
             with open(self.get('working_dir') + '/config.json', 'w') as outfile:
-                json.dump(self.__data, outfile)
+                json.dump(self.__data, outfile, indent=2)
         except IOError as e:
             raise Exception("Config write error %s" % str(e))

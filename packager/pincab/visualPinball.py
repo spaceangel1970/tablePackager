@@ -42,6 +42,7 @@ class VisualPinball:
 
         self.logger.info("* Visual Pinball X files")
         vpx_file = Path(self.visual_pinball_path + '/tables/' + package.name + '.vpx')
+        ini_file = Path(self.visual_pinball_path + '/tables/' + package.name + '.ini')
         pov_file = Path(self.visual_pinball_path + '/tables/' + package.name + '.pov')
         vpt_file = Path(self.visual_pinball_path + '/tables/' + package.name + '.vpt')
         directb2s_file = Path(self.visual_pinball_path + "/tables/" + vpx_file.stem + '.directb2s')
@@ -68,18 +69,21 @@ class VisualPinball:
         else:
             package.add_file(directb2s_file, 'visual pinball/tables')
 
-        if pov_file.exists():
-            overwrite_pov = tkinter.messagebox.askokcancel("Overwrite pov file ?",
-                                                           "Do you want to update .pov file with your last PinballX configuration ?")
-            if overwrite_pov:
-                self.logger.warning("* extract and overwrite pov file")
-                self.extract_pov_file(package, vp_file)
+        if ini_file.exists():
+            package.add_file(ini_file, 'visual pinball/tables')
         else:
-            self.logger.warning("* no pov file found, extract it")
-            self.extract_pov_file(package, vp_file)
+            if pov_file.exists():
+                overwrite_pov = tkinter.messagebox.askokcancel("Overwrite POV file ?",
+                                                               "Do you want to update the existing Visual Pinball table configuration file ?")
+                if overwrite_pov:
+                    self.logger.warning("* extract and overwrite pov file")
+                    self.extract_pov_file(package, vp_file)
+            else:
+                self.logger.warning("* no pov/ini file found, extract pov file")
+                self.extract_pov_file(package, vp_file)
 
-        if pov_file.exists():
-            package.add_file(pov_file, 'visual pinball/tables')
+            if pov_file.exists():
+                package.add_file(pov_file, 'visual pinball/tables')
 
         if music_file.exists():
             package.add_file(music_file, 'media/Audio')
@@ -104,6 +108,7 @@ class VisualPinball:
         self.logger.info("* Visual Pinball X files")
         vpx_file = Path(self.visual_pinball_path + '/tables/' + table_name + '.vpx')
         pov_file = Path(self.visual_pinball_path + '/tables/' + table_name + '.pov')
+        ini_file = Path(self.visual_pinball_path + '/tables/' + table_name + '.ini')
         vpt_file = Path(self.visual_pinball_path + '/tables/' + table_name + '.vpt')
         directb2s_file = Path(self.visual_pinball_path + "/tables/" + vpx_file.stem + '.directb2s')
         music_file = Path(
@@ -118,6 +123,9 @@ class VisualPinball:
         if pov_file.exists():
             self.logger.info("- remove %s file" % pov_file)
             os.remove(pov_file)
+        if ini_file.exists():
+            self.logger.info("- remove %s file" % ini_file)
+            os.remove(ini_file)
         if directb2s_file.exists():
             self.logger.info("- remove %s file" % directb2s_file)
             os.remove(directb2s_file)

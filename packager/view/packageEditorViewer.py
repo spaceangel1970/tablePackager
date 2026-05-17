@@ -1,9 +1,12 @@
 import logging
 import tkinter as tk
-
+import os
+from pathlib import Path
 from pprint import pprint
 from tkinter import filedialog
 from tkinter import simpledialog
+from tkinter import messagebox  # Explicit import for standard messagebox behaviors
+from tkinter.ttk import Treeview, Scrollbar, Frame, Label, Entry, Button, Checkbutton  # Explicit widget assignments
 
 import tkinter
 import PIL.Image
@@ -149,8 +152,20 @@ class PackageEditorViewer(Frame, Observer):
         else:
             imagePreviewPath = self.baseModel.base_dir + "images/Super Orbit (Gottlieb 1983).jpg"
 
-        pilImage = PIL.Image.open(imagePreviewPath)
-        pilImage.thumbnail((300, 300), PIL.Image.ANTIALIAS)
+        try:
+            pilImage = PIL.Image.open(imagePreviewPath)
+        except Exception:
+            # Fallback pathing safety to ensure root launch doesn't crash on window open
+            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            fallback_img = os.path.join(base_dir, 'images', 'noPreview.png')
+            if not os.path.exists(fallback_img):
+                fallback_img = os.path.join(os.path.dirname(base_dir), 'images', 'noPreview.png')
+            try:
+                pilImage = PIL.Image.open(fallback_img)
+            except Exception:
+                pilImage = PIL.Image.new('RGB', (300, 300), color='#2e2e2e')
+
+        pilImage.thumbnail((300, 300), PIL.Image.Resampling.LANCZOS)
 
         tkImage = PIL.ImageTk.PhotoImage(pilImage)
         self.__tkImagePreview = self.__imageCanvasViewer.create_image(150, 150, image=tkImage)
@@ -275,10 +290,21 @@ class PackageEditorViewer(Frame, Observer):
             self.__btRotateRight['state'] = 'normal'
             self.__btRotateLeft['state'] = 'normal'
         else:
-            pil_image = PIL.Image.open('images/noPreview.png')
+            # Dynamic lookups for noPreview asset to safeguard relative execution issues
+            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            img_path = os.path.join(base_dir, 'images', 'noPreview.png')
+            if not os.path.exists(img_path):
+                img_path = os.path.join(os.path.dirname(base_dir), 'images', 'noPreview.png')
+                
+            try:
+                pil_image = PIL.Image.open(img_path)
+            except Exception:
+                pil_image = PIL.Image.new('RGB', (300, 300), color='#2e2e2e')
+                
             self.__btRotateRight['state'] = 'disable'
             self.__btRotateLeft['state'] = 'disable'
-        pil_image.thumbnail((300, 300), PIL.Image.ANTIALIAS)
+
+        pil_image.thumbnail((300, 300), PIL.Image.Resampling.LANCZOS)
         tk_image = PIL.ImageTk.PhotoImage(pil_image)
         self.__imageCanvasViewer.itemconfig(self.__tkImagePreview, image=tk_image)
         self.__imageCanvasViewer.image = tk_image
@@ -334,10 +360,10 @@ class PackageEditorViewer(Frame, Observer):
 
         if 'UltraDMD/content' in item['tags']:
             ultraDMDDir = filedialog.askdirectory(parent=self.__topLevel,
-                                                  initialdir=self.__self.__last_dir,
+                                                  initialdir=self.__last_dir,
                                                   title="Select UltraDMD Directory to import")
             self.__packageEditorModel.add_ultra_dmd(self.__topLevel, item['tags'][-1], ultraDMDDir)
-            self.__self.__last_dir = ultraDMDDir
+            self.__last_dir = ultraDMDDir
             return
 
         if 'VPinMAME/cfg' in item['tags']:
@@ -355,13 +381,13 @@ class PackageEditorViewer(Frame, Observer):
         elif 'visual pinball/tables' in item['tags']:
             accepted_files = (
                 ('vpx files', '*.vpx'), ('vpx files', '*.vpt'),
-                ('directb2s files', '*.directb2s'), ('pov files', '*.pov'),
+                ('directb2s files', '*.directb2s'), ('pov files', '*.pov'), ('ini files', '*.ini'),
                 ("all files", "*.*"))
 
         if accepted_files == (("all files", "*.*")):
             src_file = filedialog.askopenfilename(parent=self.__topLevel,
                                                   initialdir=self.__last_dir,
-                                                  title="Select file")  # crash if filetypes contain only ("all files", "*.*") !?
+                                                  title="Select file")
         else:
             src_file = filedialog.askopenfilename(parent=self.__topLevel,
                                                   initialdir=self.__last_dir,
@@ -419,7 +445,7 @@ class PackageEditorViewer(Frame, Observer):
             pil_image = pil_image.rotate(angle, expand=1)
             pil_image.save(file_path)
 
-            pil_image.thumbnail((300, 300), PIL.Image.ANTIALIAS)
+            pil_image.thumbnail((300, 300), PIL.Image.Resampling.LANCZOS)
             tk_image = PIL.ImageTk.PhotoImage(pil_image)
             self.__imageCanvasViewer.itemconfig(self.__tkImagePreview, image=tk_image)
             self.__imageCanvasViewer.image = tk_image
@@ -517,7 +543,7 @@ class PackageEditorViewer(Frame, Observer):
                     self.__btDownFile['state'] = self.__backupState['btDownFile']
                     self.__tree.bind('<ButtonRelease-1>', self.on_select)
                     self.__tree.bind('<Double-1>', self.on_double_click)
-            elif '<<UPDATE_EDITOR>>':
+            elif '<<UPDATE_EDITOR>>' in event:
                 if self.__visible:
                     selection_set = None
                     if kwargs.get('selection_set'):
