@@ -10,7 +10,7 @@ class Config:
             'visual_pinball_path': 'C:/vPinball/VisualPinball',
             'pinballX_path': 'C:/pinballX',
             'pinupSystem_path': 'C:/vPinball/PinUPSystem',
-            'db_path': 'C:/Users/DAVID/Documents/tablePackager/packager/database/puplookup.csv',
+            'db_path': 'C:/vPinball/PinUPSystem/puplookup.csv',
             'manufacturer_path': 'C:/Users/DAVID/Documents/tablePackager/packager/database/manufacturer.json',
             'font': ('Helvetica', 10)
         }

@@ -84,6 +84,7 @@ class Manifest:
         self.content['media']['ScreenGrabs'] = []
         self.content['media']['TopperVideos'] = []  # new 1.1
         self.content['media']['Loading'] = []  # new 1.2
+        self.content['media']['PuP'] = []
 
     def open(self, path: Path, installed: bool = False) -> None:
         if not os.path.exists(path):

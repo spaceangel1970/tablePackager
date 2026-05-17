@@ -137,6 +137,16 @@ class PackageEditorModel(Observable):
         for file in Path(src_dir).glob('**/*'):
             self.package.add_file(file, 'UltraDMD/content')
 
+    def scan_pup_for_table(self):
+        table_name = self.package.get_field('info/table name')
+        if not table_name:
+            table_name = self.package.name
+
+        self.logger.info('Starting PuP scan for package table: %s' % table_name)
+        added = self.baseModel.bundle_pup_for_table(table_name, self.package)
+        self.update_package()
+        return added
+
     def add_file(self, viewer, data_path, srcFile, required_name):
         rename_it = False
         try:

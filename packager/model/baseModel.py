@@ -18,6 +18,7 @@ from packager.pincab.tableDatabase import TableDatabase
 from packager.model.packageEditorModel import PackageEditorModel
 from packager.model.packagedTablesModel import *
 from packager.model.search_model import *
+from packager.pincab.pupScanner import PupScanner
 
 class BaseModel:
     def __init__(self, logger: logging, version: str, package_version: str) -> None:
@@ -44,6 +45,7 @@ class BaseModel:
         self.__pinballX = PinballX(self.logger, self)
         self.__ultraDMD = UltraDMD(self.logger, self)
         self.__database = TableDatabase(self.logger, self)
+        self.__pupScanner = PupScanner(self.logger, self)
 
     @property
     def config(self):
@@ -144,4 +146,42 @@ class BaseModel:
     @property
     def database(self):
         return self.__database
+
+    @property
+    def pupScanner(self):
+        return self.__pupScanner
+
+    def bundle_pup_for_table(self, table_name: str, package_obj) -> list:
+        """Find PuP packs related to a table, create archives and add them to the given package.
+
+        - `table_name`: name of the table to search for
+        - `package_obj`: instance of `Package` to which the created pup archive(s) will be added
+
+        Returns list of filenames added to the package.
+        """
+        self.logger.info('Scanning PuP packs for table: %s' % table_name)
+        added = []
+        matches = self.pupScanner.find_for_table(table_name)
+        if not matches:
+            self.logger.info('No PuP packs found for table %s' % table_name)
+            return added
+
+        # Ensure package has a PuP directory
+        pup_dir = os.path.join(package_obj.directory, package_obj.name, 'media', 'PuP')
+        os.makedirs(pup_dir, exist_ok=True)
+
+        for match in matches:
+            src_archive = self.pupScanner.create_pup_archive(match)
+            if src_archive == '':
+                continue
+            dst_name = os.path.basename(src_archive)
+            try:
+                package_obj.add_file(src_archive, 'media/PuP')
+                added.append('media/PuP/' + dst_name)
+            except Exception as e:
+                self.logger.error('Error adding PuP pack to package: %s' % e)
+
+        if added:
+            package_obj.save()
+        return added
 

@@ -24,34 +24,77 @@ class PinUpSystem:
             return 'Visual Pinball X'
         return 'Visual Pinball X'
 
-    def extract_file(self, package: Package, product: str, media, dataPath, extension='') -> None:
+    def extract_file(self, package: Package, product: str, media, dataPath, extension='', search_name=None) -> None:
+        name_to_search = search_name if search_name else package.name
         for file in Path(
                 self.baseModel.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/' + media)\
-                .glob('**/%s%s*' % (package.name, extension)):
+                .glob('**/%s%s*' % (name_to_search, extension)):
             package.add_file(file, dataPath)  # Add vpx file
 
-    def extract(self, package: Package, product: str) -> None:
+    def extract(self, package: Package, product: str, search_name: str = None) -> None:
         if not os.path.exists(self.pinupSystem_path):
             self.logger.warning('PinupSystem not found(%s)' % self.pinupSystem_path)
             return
 
         self.logger.info("* PinupSystem files")
-        self.extract_file(package, product, 'Audio', 'media/Audio')
-        self.extract_file(package, product, 'AudioLaunch', 'media/AudioLaunch')
-        self.extract_file(package, product, 'BackGlass', 'media/Backglass')
-        self.extract_file(package, product, 'DMD', 'media/DMD')
-        self.extract_file(package, product, 'DMDVideos', 'media/DMDVideos')
-        self.extract_file(package, product, 'HighScores', 'media/HighScores')
-        self.extract_file(package, product, 'GameHelp', 'media/Instruction Cards')
-        self.extract_file(package, product, 'PlayField', 'media/PlayField')
-        self.extract_file(package, product, 'Topper', 'media/Topper')
-        self.extract_file(package, product, 'Wheel', 'media/Wheel')
-        self.extract_file(package, product, 'ScreenGrabs', 'media/ScreenGrabs')
-        self.extract_file(package, product, 'TableVideos', 'media/TableVideos')
+        self.extract_file(package, product, 'Audio', 'media/Audio', search_name=search_name)
+        self.extract_file(package, product, 'AudioLaunch', 'media/AudioLaunch', search_name=search_name)
+        self.extract_file(package, product, 'BackGlass', 'media/Backglass', search_name=search_name)
+        self.extract_file(package, product, 'DMD', 'media/DMD', search_name=search_name)
+        self.extract_file(package, product, 'DMDVideos', 'media/DMDVideos', search_name=search_name)
+        self.extract_file(package, product, 'HighScores', 'media/HighScores', search_name=search_name)
+        self.extract_file(package, product, 'GameHelp', 'media/Instruction Cards', search_name=search_name)
+        self.extract_file(package, product, 'PlayField', 'media/PlayField', search_name=search_name)
+        self.extract_file(package, product, 'Topper', 'media/Topper', search_name=search_name)
+        self.extract_file(package, product, 'Wheel', 'media/Wheel', search_name=search_name)
+        self.extract_file(package, product, 'ScreenGrabs', 'media/ScreenGrabs', search_name=search_name)
+        self.extract_file(package, product, 'TableVideos', 'media/TableVideos', search_name=search_name)
 
-        self.extract_file(package, product, 'GameInfo', 'media/Flyers Front') # TOTO:check
-       # self.extract_file(package, product, 'GameInfo', 'media/Flyers Back', extension='.back')
-        self.extract_file(package, product, 'Loading', 'media/Loading')
+        self.extract_file(package, product, 'GameInfo', 'media/Flyers Front', search_name=search_name) # TOTO:check
+       # self.extract_file(package, product, 'GameInfo', 'media/Flyers Back', extension='.back', search_name=search_name)
+        self.extract_file(package, product, 'Loading', 'media/Loading', search_name=search_name)
+
+        # --- NEW CODE: AUTOMATIC LOCAL PUP-PACK EXTRACTION ---
+        try:
+            rom_field = package.get_field('visual pinball/info/romName')
+            rom_names = []
+            
+            if rom_field:
+                if isinstance(rom_field, list):
+                    rom_names = [str(r).strip() for r in rom_field if r]
+                else:
+                    clean_rom = str(rom_field).replace('[', '').replace(']', '').replace("'", "").replace('"', '')
+                    rom_names = [r.strip() for r in clean_rom.split(',') if r.strip()]
+            
+            pup_videos_base = os.path.join(self.pinupSystem_path, 'PUPVideos')
+            
+            if os.path.exists(pup_videos_base) and rom_names:
+                for rom in rom_names:
+                    if rom.lower() == "yourgame":
+                        continue
+                        
+                    target_pup_folder = os.path.join(pup_videos_base, rom)
+                    if os.path.exists(target_pup_folder) and os.path.isdir(target_pup_folder):
+                        self.logger.info(f"++ Found active local PuP folder matching ROM: '{rom}'")
+                        
+                        # Set paths for the staging workspace
+                        staging_dir = os.path.join(package.directory, package.name, 'media', 'PuP')
+                        os.makedirs(staging_dir, exist_ok=True)
+                        
+                        # Generate the zipped archive destination name
+                        archive_destination = os.path.join(staging_dir, f"{rom}")
+                        
+                        # Compress the directory into the table package layout folder
+                        self.logger.info(f"+ archiving PuP folder -> 'media/PuP/{rom}.zip'")
+                        shutil.make_archive(archive_destination, 'zip', target_pup_folder)
+                        
+                        # Register the newly generated archive to the system manifest
+                        final_zip_path = f"{archive_destination}.zip"
+                        package.manifest.add_file('media/PuP', final_zip_path)
+                        package.save()
+                        
+        except Exception as e:
+            self.logger.error(f"Error packing local PuP folder asset contents: {e}")
 
     def deploy(self, package: Package, product: str) -> None:
         self.logger.info("* Deploy PinUp Media")
