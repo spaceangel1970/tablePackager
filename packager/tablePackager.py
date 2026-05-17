@@ -1,4 +1,6 @@
 import logging
+import os
+import sys
 
 from packager.view.mainWindow import *
 from packager.model.baseModel import *
@@ -12,6 +14,13 @@ package_version = '1.2'
 # https://datastudio.google.com/reporting/13ua5g7jmoyHovP4hrqk48HBYGeQbpJ1Z/page/55yX
 
 def main():
+    # --- PYINSTALLER PATH FIX ---
+    # If running inside a PyInstaller EXE, redirect the working directory 
+    # to the temporary folder where the images are extracted.
+    if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+        os.chdir(sys._MEIPASS)
+    # ----------------------------
+
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s",
