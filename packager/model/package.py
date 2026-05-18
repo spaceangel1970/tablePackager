@@ -311,6 +311,47 @@ class Package:
         self.__directory = base_dir
         self.__manifest = Manifest(self.__name, self.baseModel.package_version)
         self.manifest.open(self.__directory)
+
+        # --- AMENDMENT: GENERATE VIRTUAL FOLDER PREVIEWS FOR LOOSE PUP ASSETS ---
+        try:
+            pup_base_path = os.path.join(self.directory, self.name, 'media', 'PuP')
+            if os.path.exists(pup_base_path) and os.path.isdir(pup_base_path):
+                for folder_item in os.listdir(pup_base_path):
+                    target_folder_path = os.path.join(pup_base_path, folder_item)
+                    if os.path.isdir(target_folder_path):
+                        if 'PuP' not in self.manifest.content['media']:
+                            self.manifest.content['media']['PuP'] = []
+                        
+                        already_listed = False
+                        for tracked_file in self.manifest.content['media']['PuP']:
+                            if tracked_file.get('file', {}).get('name') == folder_item:
+                                already_listed = True
+                                break
+                        
+                        if not already_listed:
+                            # --- CALCULATE TOTAL DIRECTORY FOOTPRINT ---
+                            total_bytes = 0
+                            for root, dirs, files in os.walk(target_folder_path):
+                                for f in files:
+                                    fp = os.path.join(root, f)
+                                    if os.path.exists(fp):
+                                        total_bytes += os.path.getsize(fp)
+                            # --------------------------------------------
+
+                            virtual_entry = collections.OrderedDict()
+                            virtual_entry['name'] = folder_item
+                            virtual_entry['size'] = total_bytes  # <-- Pops the real file size into the UI!
+                            virtual_entry['sha1'] = 'directory'
+                            virtual_entry['author(s)'] = 'PuP-Pack Folder'
+                            virtual_entry['version'] = ''
+                            virtual_entry['url'] = ''
+                            virtual_entry['lastmod'] = utcTime2IsoStr()
+                            
+                            self.manifest.content['media']['PuP'].append({'file': virtual_entry})
+        except Exception as e:
+            self.logger.warning(f"Could not populate PuP folder preview hooks: {e}")
+        # -----------------------------------------------------------------------
+
         self.check_package()
 
     def check_package(self) -> None:
@@ -412,7 +453,7 @@ class Package:
                     self.logger.info("+ rename file '%s'" % (path + '/' + value['name']))
                     os.rename(self.directory + '/' + self.name + '/' + path + '/' + value['name'],
                               self.directory + '/' + self.name + '/' + path + '/' + value['name'].replace(self.name,
-                                                                                                          new_name))
+                                                                                                         new_name))
                     value['name'] = value['name'].replace(self.name, new_name)
 
             elif isinstance(value, dict):

@@ -54,8 +54,10 @@ class PinUpSystem:
        # self.extract_file(package, product, 'GameInfo', 'media/Flyers Back', extension='.back', search_name=search_name)
         self.extract_file(package, product, 'Loading', 'media/Loading', search_name=search_name)
 
-        # --- NEW CODE: AUTOMATIC LOCAL PUP-PACK EXTRACTION ---
+        # --- FIXED CODE: COPIES RAW PUP PACK WITHOUT MANIFEST ERRORS ---
         try:
+            import shutil
+            
             rom_field = package.get_field('visual pinball/info/romName')
             rom_names = []
             
@@ -77,25 +79,20 @@ class PinUpSystem:
                     if os.path.exists(target_pup_folder) and os.path.isdir(target_pup_folder):
                         self.logger.info(f"++ Found active local PuP folder matching ROM: '{rom}'")
                         
-                        # Set paths for the staging workspace
-                        staging_dir = os.path.join(package.directory, package.name, 'media', 'PuP')
-                        os.makedirs(staging_dir, exist_ok=True)
+                        destination_pup_dir = os.path.join(package.directory, package.name, 'media', 'PuP', rom)
                         
-                        # Generate the zipped archive destination name
-                        archive_destination = os.path.join(staging_dir, f"{rom}")
+                        self.logger.info(f"+ Copying raw PuP folder contents quietly -> 'media/PuP/{rom}/'")
                         
-                        # Compress the directory into the table package layout folder
-                        self.logger.info(f"+ archiving PuP folder -> 'media/PuP/{rom}.zip'")
-                        shutil.make_archive(archive_destination, 'zip', target_pup_folder)
+                        if os.path.exists(destination_pup_dir):
+                            shutil.rmtree(destination_pup_dir)
                         
-                        # Register the newly generated archive to the system manifest
-                        final_zip_path = f"{archive_destination}.zip"
-                        package.manifest.add_file('media/PuP', final_zip_path)
-                        package.save()
+                        # Mirror the loose folders directly into the zip staging zone
+                        shutil.copytree(target_pup_folder, destination_pup_dir)
+                        
+                        self.logger.info(f"++ Raw PuP pack files mirrored safely to package staging workspace.")
                         
         except Exception as e:
-            self.logger.error(f"Error packing local PuP folder asset contents: {e}")
-
+            self.logger.error(f"Error copying local loose PuP folder assets: {e}")
     def deploy(self, package: Package, product: str) -> None:
         self.logger.info("* Deploy PinUp Media")
 
