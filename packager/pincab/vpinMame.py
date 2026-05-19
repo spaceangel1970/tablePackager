@@ -219,7 +219,6 @@ class VPinMame:
                     self.logger.error(f"[B2S XML LOG] Error handling custom XML block profile extraction: {str(e)}")
 
         # 6. --- TABLE DIRECTORY .RES OVERRIDE DETECTOR ---
-        # Look for a .res file matching the package name inside the tables directory
         try:
             tables_dir = os.path.join(self.visual_pinball_path, 'tables')
             res_filename = f"{package.name}.res"
@@ -252,7 +251,7 @@ class VPinMame:
                     copytree(self.logger, s, d)
                 elif os.path.isfile(s):
                     if item == 'DmdDevice.ini':
-                        shutil.copy2(s, d)
+                        self.merge_dmd_ini(s, d)  # Safe custom merge instead of destructive copy
                     elif item == 'VPMAlias.txt':
                         self.merge_alias_file(s, d)
 
@@ -266,7 +265,6 @@ class VPinMame:
                     if item == 'B2STableSettings.xml':
                         self.merge_b2s_xml(s, d)
                     else:
-                        # Direct file drops for any supplementary tracked items (like our newly added .res file)
                         shutil.copy2(s, d)
                         self.logger.info(f"++ Deployed table asset: {item}")
 
@@ -309,6 +307,68 @@ class VPinMame:
                 self.logger.info("++ Successfully merged snippet rules into global VPMAlias.txt configuration.")
         except Exception as e:
             self.logger.error(f"[Alias Merge Error] Failed merging entries: {str(e)}")
+
+    def merge_dmd_ini(self, source_snippet, target_global_file):
+        """Surgically inserts or updates a single table block profile within the master global DmdDevice.ini."""
+        try:
+            if not os.path.exists(source_snippet):
+                return
+
+            with open(source_snippet, 'r', encoding='utf-8') as f:
+                snippet_lines = f.readlines()
+
+            # Find the bracketed header row name from the snippet file (e.g. "[clas1812abc]")
+            target_header = ""
+            for line in snippet_lines:
+                if line.strip().startswith('[') and line.strip().endswith(']'):
+                    target_header = line.strip().lower()
+                    break
+
+            if not target_header:
+                return  # Malformed snippet file containing no block header context
+
+            # Handle edge cases where the destination setup completely lacks a global INI file
+            if not os.path.exists(target_global_file):
+                shutil.copy2(source_snippet, target_global_file)
+                self.logger.info("++ Global DmdDevice.ini missing on target. Created file from snippet profile.")
+                return
+
+            with open(target_global_file, 'r', encoding='utf-8', errors='ignore') as f:
+                global_lines = f.readlines()
+
+            # Scan the cabinet machine file to see if this specific ROM segment already exists
+            header_index = -1
+            for idx, line in enumerate(global_lines):
+                if line.strip().lower() == target_header:
+                    header_index = idx
+                    break
+
+            if header_index != -1:
+                # The section block already exists on this cabinet. We need to cut out the old block and plug in ours.
+                # Find where the old block ends (next section header or EOF)
+                end_index = len(global_lines)
+                for idx in range(header_index + 1, len(global_lines)):
+                    if global_lines[idx].strip().startswith('[') and global_lines[idx].strip().endswith(']'):
+                        end_index = idx
+                        break
+                
+                # Piece the file back together, substituting our custom snippet entries
+                updated_content = global_lines[:header_index] + snippet_lines + global_lines[end_index:]
+                with open(target_global_file, 'w', encoding='utf-8') as f:
+                    f.writelines(updated_content)
+                self.logger.info(f"++ Successfully overwritten existing custom DMD block settings for {target_header} inside global INI.")
+            else:
+                # The section is brand new to this cabinet machine. Safe to append right onto the bottom layout.
+                if global_lines and not global_lines[-1].endswith('\n'):
+                    global_lines.append('\n')
+                global_lines.extend(snippet_lines)
+                
+                with open(target_global_file, 'w', encoding='utf-8') as f:
+                    f.writelines(global_lines)
+                self.logger.info(f"++ Successfully appended new custom DMD parameters for {target_header} to global DmdDevice.ini matrix.")
+
+        except Exception as e:
+            self.logger.error(f"[DMD INI Merge Error] Failed processing machine layout insertion: {str(e)}")
 
     def merge_b2s_xml(self, source_snippet, target_global_file):
         """Gracefully merges or modifies specific ROM configuration nodes inside B2STableSettings.xml."""
