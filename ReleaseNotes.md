@@ -9,7 +9,8 @@
 - Added search for VPMAlias.txt entries
 - Added search for B2STableSettings.xml entries
 - Added search for PupPack entries
-- Added search for table .ini entries
+- Added search for table .ini POV files
+- Added search for table .res Custom files
 
 ### Bug Fixes
 

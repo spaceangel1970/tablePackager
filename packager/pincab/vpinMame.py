@@ -218,6 +218,20 @@ class VPinMame:
                 except Exception as e:
                     self.logger.error(f"[B2S XML LOG] Error handling custom XML block profile extraction: {str(e)}")
 
+        # 6. --- TABLE DIRECTORY .RES OVERRIDE DETECTOR ---
+        # Look for a .res file matching the package name inside the tables directory
+        try:
+            tables_dir = os.path.join(self.visual_pinball_path, 'tables')
+            res_filename = f"{package.name}.res"
+            target_res_path = os.path.join(tables_dir, res_filename)
+
+            if os.path.exists(target_res_path) and os.path.isfile(target_res_path):
+                self.logger.info(f"++ Found custom table override screen profile: {res_filename}")
+                package.add_file(Path(target_res_path), 'visual pinball/tables')
+                self.logger.info(f"++ Safely staged .res file via package index mapping.")
+        except Exception as e:
+            self.logger.error(f"[RES Checker Log] Failed scanning for table .res asset: {str(e)}")
+
         # Update and save the package metadata tree presence flags
         package.set_field('visual pinball/info/has_custom_dmd', 'Yes' if custom_dmd_processed else 'No')
         package.set_field('visual pinball/info/has_alias', 'Yes' if alias_processed else 'No')
@@ -242,14 +256,19 @@ class VPinMame:
                     elif item == 'VPMAlias.txt':
                         self.merge_alias_file(s, d)
 
-        # Handle tables folder additions (B2STableSettings snippet insertion)
+        # Handle tables folder additions (B2STableSettings snippet insertion & generic files like .res)
         tables_stage = os.path.join(package_stage_path, "visual pinball", "tables")
         if os.path.exists(tables_stage):
             for item in os.listdir(tables_stage):
                 s = os.path.join(tables_stage, item)
                 d = os.path.join(self.visual_pinball_path, "tables", item)
-                if os.path.isfile(s) and item == 'B2STableSettings.xml':
-                    self.merge_b2s_xml(s, d)
+                if os.path.isfile(s):
+                    if item == 'B2STableSettings.xml':
+                        self.merge_b2s_xml(s, d)
+                    else:
+                        # Direct file drops for any supplementary tracked items (like our newly added .res file)
+                        shutil.copy2(s, d)
+                        self.logger.info(f"++ Deployed table asset: {item}")
 
     def merge_alias_file(self, source_snippet, target_global_file):
         """Merges new alias rules into the destination global file without losing existing entries."""
