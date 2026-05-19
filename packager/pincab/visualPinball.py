@@ -140,10 +140,52 @@ class VisualPinball:
     """
 
     def extract_rom_name(self, vpt_file: Path) -> list:
-        all_roms = extract_string_from_binary_file(vpt_file, br'[.]*GameName[ ]*=[ ]*"([a-zA-Z0-9_]+)"')
-        escape_rom = extract_string_from_binary_file(vpt_file, br'\'[a-zA-Z0-9_ ]*GameName[ ]*=[ ]*"([a-zA-Z0-9_]+)"')
-        active_rom = list(set(all_roms) - set(escape_rom))
-        return active_rom + escape_rom
+        import re
+        
+        active_roms = []
+        escaped_roms = []
+        
+        try:
+            # Read the raw file bytes directly
+            with open(vpt_file, 'rb') as f:
+                content = f.read()
+                
+            # Decode to text, ignoring non-text binary bytes cleanly
+            text_content = content.decode('utf-8', errors='ignore')
+            
+            # This universal pattern catches: standard variables, Const, Dim, wide spaces, and tabs
+            # Grabs the game name inside the quotes
+            pattern = r'(?:(?:Public|Private)\s+)?(?:Const|Dim)?\s*(?:cGameName|RomSet|GameName)\s*=\s*"([a-zA-Z0-9_]+)"'
+            
+            # Find every single line matching our target variables
+            for match in re.finditer(pattern, text_content, re.IGNORECASE):
+                rom_name = match.group(1).strip()
+                
+                # Check if this line was commented out in VBScript
+                # Look backwards from the start of the match to check for a single quote mark
+                line_start = text_content.rfind('\n', 0, match.start())
+                if line_start == -1:
+                    line_start = 0
+                
+                line_prefix = text_content[line_start:match.start()]
+                
+                if "'" in line_prefix:
+                    if rom_name not in escaped_roms:
+                        escaped_roms.append(rom_name)
+                else:
+                    if rom_name not in active_roms:
+                        active_roms.append(rom_name)
+                        
+        except Exception as e:
+            self.logger.error(f"Fallback byte-scanner error: {str(e)}")
+
+        # Clean out "yourgame" generic placeholders if they slipped in
+        active_roms = [r for r in active_roms if r.lower() != "yourgame"]
+        escaped_roms = [r for r in escaped_roms if r.lower() != "yourgame"]
+
+        # Keep your framework's expected return format exactly intact
+        final_list = active_roms + escaped_roms
+        return final_list
 
     def extract_table_name(self, vpt_file: Path) -> list:
         return extract_string_from_binary_file(vpt_file, br'TableName[ ]*=[ ]*"([a-zA-Z0-9_]+)"')

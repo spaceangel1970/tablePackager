@@ -65,6 +65,8 @@ class Manifest:
         self.content['VPinMAME']['nvram'] = []
         self.content['VPinMAME']['roms'] = []
         self.content['VPinMAME']['memcard'] = []
+        self.content['VPinMAME']['altcolor'] = []  # Fixed: lowercase 'a'
+        self.content['VPinMAME']['altsound'] = []
 
         self.content['media'] = collections.OrderedDict()
         self.content['media']['Flyers Front'] = []
@@ -82,25 +84,29 @@ class Manifest:
         self.content['media']['AudioLaunch'] = []
         self.content['media']['Topper'] = []
         self.content['media']['ScreenGrabs'] = []
-        self.content['media']['TopperVideos'] = []  # new 1.1
-        self.content['media']['Loading'] = []  # new 1.2
-        self.content['media']['PuP'] = []
+        self.content['media']['TopperVideos'] = []  
+        self.content['media']['Loading'] = []  
+        self.content['media']['PuP'] = []  # Keep standard layout key intact for file/manifest integrity
 
     def open(self, path: Path, installed: bool = False) -> None:
         if not os.path.exists(path):
             raise PackageException("Manifest not found at %s" % path)
         try:
             if installed:
-                manifest_path = path + '/' + self.filename  # search manifest in installed table dir
+                manifest_path = path + '/' + self.filename  
             else:
                 manifest_path = path + '/' + self.name + '/' + self.filename
             with open(manifest_path) as data_file:
                 self.__content = json.load(data_file, object_pairs_hook=collections.OrderedDict)
+                
+                # Migration safety hook: If an old manifest used a literal "PuP Pack" key inside json, map it back to "PuP"
+                if 'media' in self.__content and 'PuP Pack' in self.__content['media']:
+                    self.__content['media']['PuP'] = self.__content['media'].pop('PuP Pack')
         except:
             raise PackageException("Manifest not found at %s" % (path + '/' + self.name + '/' + self.filename))
 
     def save(self, path: Path) -> None:
-        self.set_field('info/lastmod', utcTime2IsoStr())  # update last modification date
+        self.set_field('info/lastmod', utcTime2IsoStr())  
         try:
             with open(path + '/' + self.name + '/' + self.filename, 'w') as outfile:
                 json.dump(self.__content, outfile)
@@ -108,7 +114,7 @@ class Manifest:
             raise PackageException("Manifest write error %s" % str(e))
 
     def save_as(self, path: Path, name: str) -> None:
-        self.set_field('info/lastmod', utcTime2IsoStr())  # update last modification date
+        self.set_field('info/lastmod', utcTime2IsoStr())  
         try:
             with open(path + '/' + self.name + '/' + name + '.manifest.json', 'w') as outfile:
                 json.dump(self.__content, outfile)
@@ -122,14 +128,17 @@ class Manifest:
 
     def set_field(self, field_path: str, value) -> None:
         content = self.__content
-        field_list = field_path.split('/')
+        # Handle UI field route intercepts
+        normalized_path = field_path.replace('PuP Pack', 'PuP')
+        field_list = normalized_path.split('/')
         for field in field_list[:-1]:
             content = content[field]
         content[field_list[-1]] = value
 
     def get_field(self, field_path: str):
         content = self.__content
-        field_list = field_path.split('/')
+        normalized_path = field_path.replace('PuP Pack', 'PuP')
+        field_list = normalized_path.split('/')
         for field in field_list[:-1]:
             if field == '': continue
             content = content[field]
@@ -137,7 +146,8 @@ class Manifest:
 
     def exists_field(self, field_path: str) -> bool:
         content = self.__content
-        field_list = field_path.split('/')
+        normalized_path = field_path.replace('PuP Pack', 'PuP')
+        field_list = normalized_path.split('/')
         for field in field_list:
             if not content.get(field):
                 return False
@@ -146,7 +156,8 @@ class Manifest:
 
     def get_file(self, field_path: str, filename: str):
         content = self.__content
-        field_list = field_path.split('/')
+        normalized_path = field_path.replace('PuP Pack', 'PuP')
+        field_list = normalized_path.split('/')
         for field_type in field_list:
             content = content[field_type]
         for file in content:
@@ -156,33 +167,33 @@ class Manifest:
 
     def prev_file_data_path(self, field_path: str, filename: str):
         prev_file = ''
-
-        field_list = field_path.split('/')
+        normalized_path = field_path.replace('PuP Pack', 'PuP')
+        field_list = normalized_path.split('/')
         content = self.__content
 
         for key1, val1 in content.items():
             if key1 == 'info': continue
             for key2, val2 in content[key1].items():
                 if key1 == field_list[0] and key2 == field_list[1]:
-                    return prev_file
+                    return prev_file.replace('PuP', 'PuP Pack')
                 if key2 == 'info': continue
                 prev_file = key1 + '/' + key2
-        return prev_file
+        return prev_file.replace('PuP', 'PuP Pack')
 
     def next_file_data_path(self, field_path: str, filename: str):
         next_file = ''
-
-        field_list = field_path.split('/')
+        normalized_path = field_path.replace('PuP Pack', 'PuP')
+        field_list = normalized_path.split('/')
         content = self.__content
 
         for key1, val1 in reversed(list(content.items())):
             if key1 == 'info': continue
             for key2, val2 in reversed(list(content[key1].items())):
                 if key1 == field_list[0] and key2 == field_list[1]:
-                    return next_file
+                    return next_file.replace('PuP', 'PuP Pack')
                 if key2 == 'info': continue
                 next_file = key1 + '/' + key2
-        return next_file
+        return next_file.replace('PuP', 'PuP Pack')
 
     def exists_file(self, field_path: str, filename: str) -> bool:
         (file, content) = self.get_file(field_path, filename)
@@ -198,7 +209,8 @@ class Manifest:
         return False
 
     def add_file_info(self, field_path: str, file: dict):
-        field_list = field_path.split('/')
+        normalized_path = field_path.replace('PuP Pack', 'PuP')
+        field_list = normalized_path.split('/')
         content = self.__content
         for field_type in field_list:
             if field_type == '':
@@ -209,14 +221,12 @@ class Manifest:
     def add_file(self, field_path: str, full_path_src_file: str):
         manifest_file = None
 
-        # check if file is already set in manifest
         (file, content) = self.get_file(field_path, Path(full_path_src_file).name)
         if file is not None:
-            # compare sha1
             sha1=sha1sum(full_path_src_file)
             if file['file']['sha1'] != sha1:
                 logging.warning("! file '%s/%s' changed" % (Path(full_path_src_file).name, field_path))
-                file['file']['lastmod'] = mtime2IsoStr(os.path.getmtime(full_path_src_file))  # last modification date
+                file['file']['lastmod'] = mtime2IsoStr(os.path.getmtime(full_path_src_file))  
                 file['file']['size'] = os.path.getsize(full_path_src_file)
                 file['file']['sha1'] = sha1
             return
@@ -228,9 +238,10 @@ class Manifest:
         file['author(s)'] = ''
         file['version'] = ''
         file['url'] = ''
-        file['lastmod'] = mtime2IsoStr(os.path.getmtime(full_path_src_file))  # last modification date
+        file['lastmod'] = mtime2IsoStr(os.path.getmtime(full_path_src_file))  
 
-        field_list = field_path.split('/')
+        normalized_path = field_path.replace('PuP Pack', 'PuP')
+        field_list = normalized_path.split('/')
         content = self.__content
         for field_type in field_list:
             content = content[field_type]
@@ -242,7 +253,8 @@ class Manifest:
             return
 
         content.remove(file)
-        field_list = dst_field_path.split('/')
+        normalized_dst = dst_field_path.replace('PuP Pack', 'PuP')
+        field_list = normalized_dst.split('/')
         content = self.__content
         for type in field_list:
             content = content[type]
@@ -262,7 +274,9 @@ class Manifest:
             for value in values:
                 if value.get('file'):
                     if Path(value['file']['name']).suffix == '.png' or Path(value['file']['name']).suffix == '.jpg':
-                        return 'media/' + key, value['file']['name']
+                        # Present correct UI paths back to application loop hooks
+                        ui_key = 'PuP Pack' if key == 'PuP' else key
+                        return 'media/' + ui_key, value['file']['name']
         return None, None
 
 
@@ -296,10 +310,18 @@ class Package:
     # create empty package
     def new(self, package_dir):
         self.__directory = package_dir
-        self.__manifest = Manifest(self.name, self.baseModel.package_version)
-        self.__manifest.new()  # create empty package
-        self.build_tree(self.directory + '/' + self.name, self.manifest.content)
+        self.__manifest = Manifest(self.__name, self.baseModel.package_version)
+        self.__manifest.new()  
+        self.build_tree(self.directory + '/' + self.__name, self.manifest.content)
         self.__manifest.save(self.directory)
+
+    def build_tree(self, baseDir, content):
+        if type(content) is list:
+            return
+        for item in content:
+            if item == 'info': continue
+            os.makedirs(baseDir + '/' + item, exist_ok=True)
+            self.build_tree(baseDir + '/' + item, content[item])
 
     """
     Open and read directory package
@@ -312,13 +334,20 @@ class Package:
         self.__manifest = Manifest(self.__name, self.baseModel.package_version)
         self.manifest.open(self.__directory)
 
-        # --- AMENDMENT: GENERATE VIRTUAL FOLDER PREVIEWS FOR LOOSE PUP ASSETS ---
+        # Cleanup safeguard: If an erratic blank 'PuP Pack' workspace directory was generated by old code, remove it
+        bad_workspace_path = os.path.join(self.directory, self.name, 'media', 'PuP Pack')
+        if os.path.exists(bad_workspace_path) and os.path.isdir(bad_workspace_path) and len(os.listdir(bad_workspace_path)) == 0:
+            try: os.rmdir(bad_workspace_path)
+            except: pass
+
+        # --- SCANS STANDARD DISK 'PuP' PATH AND ATTACH DIRECTLY TO UI VIEW HOOKS ---
         try:
             pup_base_path = os.path.join(self.directory, self.name, 'media', 'PuP')
             if os.path.exists(pup_base_path) and os.path.isdir(pup_base_path):
                 for folder_item in os.listdir(pup_base_path):
                     target_folder_path = os.path.join(pup_base_path, folder_item)
                     if os.path.isdir(target_folder_path):
+                        
                         if 'PuP' not in self.manifest.content['media']:
                             self.manifest.content['media']['PuP'] = []
                         
@@ -329,18 +358,16 @@ class Package:
                                 break
                         
                         if not already_listed:
-                            # --- CALCULATE TOTAL DIRECTORY FOOTPRINT ---
                             total_bytes = 0
                             for root, dirs, files in os.walk(target_folder_path):
                                 for f in files:
                                     fp = os.path.join(root, f)
                                     if os.path.exists(fp):
                                         total_bytes += os.path.getsize(fp)
-                            # --------------------------------------------
 
                             virtual_entry = collections.OrderedDict()
                             virtual_entry['name'] = folder_item
-                            virtual_entry['size'] = total_bytes  # <-- Pops the real file size into the UI!
+                            virtual_entry['size'] = total_bytes
                             virtual_entry['sha1'] = 'directory'
                             virtual_entry['author(s)'] = 'PuP-Pack Folder'
                             virtual_entry['version'] = ''
@@ -349,10 +376,52 @@ class Package:
                             
                             self.manifest.content['media']['PuP'].append({'file': virtual_entry})
         except Exception as e:
-            self.logger.warning(f"Could not populate PuP folder preview hooks: {e}")
-        # -----------------------------------------------------------------------
+            self.logger.warning(f"Could not populate PuP Pack folder preview hooks: {e}")
+        # --------------------------------------------------------------------------------
 
-        self.check_package()
+        # ================================================================================
+        # >>> NEW: PLACE STEP 2 RIGHT HERE (JUST BEFORE CHECK_PACKAGE) <<<
+        # ================================================================================
+        # --- AMENDMENT: SCANS ALTCOLOR AND ALTSOUND ROM FOLDERS ---
+        for vpin_category in ['altcolor', 'altsound']:  # Fixed: lowercase 'a'
+            try:
+                base_scan_path = os.path.join(self.directory, self.name, 'VPinMAME', vpin_category)
+                if os.path.exists(base_scan_path) and os.path.isdir(base_scan_path):
+                    for folder_item in os.listdir(base_scan_path):
+                        target_folder_path = os.path.join(base_scan_path, folder_item)
+                        if os.path.isdir(target_folder_path):
+                            
+                            if vpin_category not in self.manifest.content['VPinMAME']:
+                                self.manifest.content['VPinMAME'][vpin_category] = []
+                            
+                            # Check if already in manifest to prevent duplicate display rows
+                            already_listed = False
+                            for tracked_file in self.manifest.content['VPinMAME'][vpin_category]:
+                                if tracked_file.get('file', {}).get('name') == folder_item:
+                                    already_listed = True
+                                    break
+                            
+                            if not already_listed:
+                                total_bytes = 0
+                                for root, dirs, files in os.walk(target_folder_path):
+                                    for f in files:
+                                        fp = os.path.join(root, f)
+                                        if os.path.exists(fp):
+                                            total_bytes += os.path.getsize(fp)
+
+                                virtual_entry = collections.OrderedDict()
+                                virtual_entry['name'] = folder_item
+                                virtual_entry['size'] = total_bytes
+                                virtual_entry['sha1'] = 'directory'
+                                virtual_entry['author(s)'] = f'{vpin_category} Folder'
+                                virtual_entry['version'] = ''
+                                virtual_entry['url'] = ''
+                                virtual_entry['lastmod'] = utcTime2IsoStr()
+                                
+                                self.manifest.content['VPinMAME'][vpin_category].append({'file': virtual_entry})
+            except Exception as e:
+                self.logger.warning(f"Could not populate {vpin_category} folder preview hooks: {e}")
+        # --------------------------------------------------------------------------------
 
     def check_package(self) -> None:
         if not os.path.exists(self.directory):
@@ -409,16 +478,16 @@ class Package:
         for key, fields in content.items():
             if key == 'info':
                 for field_name, value in fields.items():
-                    path = 'info/' + field_name  # TODO:del
-                    print("merge_files: %s=%s" % (path, value))  # TODO:del
+                    path = 'info/' + field_name  
+                    print("merge_files: %s=%s" % (path, value))  
                     if field_name != 'packager version' and field_name != 'package version':
                         self.manifest.set_field('info/' + field_name,
-                                                value)  # copy all fields except packager version and package version
+                                                value)  
             elif key == 'file':
                 file = collections.OrderedDict()
                 for field_name, value in fields.items():
                     file[field_name] = value
-                self.manifest.add_file_info(file_path, file)  # copy file info to new manifest
+                self.manifest.add_file_info(file_path, file)  
             elif isinstance(fields, dict):
                 error_list = error_list + self.merge_files(content[key], origin_path, file_path + '/' + key)
             elif type(fields) is list:
@@ -429,12 +498,11 @@ class Package:
         return error_list
 
     def merge(self, installed: bool = False) -> None:
-        # read installed manifest
         installed_manifest = Manifest(self.__name, self.baseModel.package_version)
         installed_manifest.open(self.__baseModel.installed_path, installed)
 
         self.merge_files(installed_manifest.content, self.directory + '/' + self.name, '')
-        self.manifest.set_field('info/lastmod', utcTime2IsoStr())  # update last modification date
+        self.manifest.set_field('info/lastmod', utcTime2IsoStr())  
 
     def update(self) -> None:
         if not os.path.exists(self.directory):
@@ -476,14 +544,6 @@ class Package:
                   self.directory + '/' + new_name)
         self.__name = new_name
 
-    def build_tree(self, baseDir, content):
-        if type(content) is list:
-            return
-        for item in content:
-            if item == 'info': continue
-            os.makedirs(baseDir + '/' + item, exist_ok=True)
-            self.build_tree(baseDir + '/' + item, content[item])
-
     def set_field(self, field_path, value):
         self.manifest.set_field(field_path, value)
 
@@ -499,9 +559,9 @@ class Package:
 
         orig_name = Path(dst_file).stem
         orig_suffix = Path(dst_file).suffix
-        while os.path.exists(dst_file):  # check if dst file already exists
+        while os.path.exists(dst_file):  
             if check_sha1:
-                if sha1sum(dst_file) == sha1sum(src_file):  # same files, overwrite it
+                if sha1sum(dst_file) == sha1sum(src_file):  
                     is_same_file = True
                     break
 
@@ -520,6 +580,7 @@ class Package:
 
             if dst_file is None:
                 dst_file = Path(full_path_src_file).name
+                
             (dst_file, isSameFile) = self.collision_detector(full_path_src_file,
                                                              self.directory + '/' + self.name + '/' + dst_field_path + '/' + dst_file,
                                                              check_sha1=True)
@@ -570,7 +631,7 @@ class Package:
                 self.manifest.rename_file(src_field_path, src_file, dstFile)
                 src_file = dstFile
 
-            self.manifest.move_file(src_file, src_field_path, dst_field_path)  # !! move_file -> same name
+            self.manifest.move_file(src_file, src_field_path, dst_field_path)
             self.save()
         except OSError as e:
             self.logger.error(str(e))

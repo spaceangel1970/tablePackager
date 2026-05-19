@@ -1,3 +1,5 @@
+import os
+import shutil
 from packager.tools.toolbox import *
 from packager.model.package import Package
 from pathlib import Path
@@ -104,6 +106,39 @@ class PinballX:
                 package.add_file(file, 'media/Backglass')
             elif "Screen Grabs" in str(file.parent):
                 package.add_file(file, 'media/ScreenGrabs')
+                
+            # --- NEW INTERCEPT ROUTINES FOR AUTOMATED ALTCOLOR PACKAGING ---
+            elif "VPinMAME\\altcolor" in str(file):
+                if os.path.isdir(file):
+                    # Targets the root ROM directory structure directly
+                    dest_path = os.path.join(package.directory, package.name, 'VPinMAME', 'altcolor', file.name)
+                    os.makedirs(dest_path, exist_ok=True)
+                    
+                    # Mirror raw folder tree quietly to staging
+                    for root, dirs, files in os.walk(file):
+                        rel_p = os.path.relpath(root, start=str(file))
+                        target_dir = os.path.normpath(os.path.join(dest_path, rel_p))
+                        os.makedirs(target_dir, exist_ok=True)
+                        for f in files:
+                            shutil.copy2(os.path.join(root, f), os.path.join(target_dir, f))
+                    self.logger.info(f"++ Raw altcolor pack folder mirrored safely to package workspace.")
+                continue
+
+            # --- NEW INTERCEPT ROUTINES FOR AUTOMATED ALTSOUND PACKAGING ---
+            elif "VPinMAME\\altsound" in str(file):
+                if os.path.isdir(file):
+                    dest_path = os.path.join(package.directory, package.name, 'VPinMAME', 'altsound', file.name)
+                    os.makedirs(dest_path, exist_ok=True)
+                    
+                    for root, dirs, files in os.walk(file):
+                        rel_p = os.path.relpath(root, start=str(file))
+                        target_dir = os.path.normpath(os.path.join(dest_path, rel_p))
+                        os.makedirs(target_dir, exist_ok=True)
+                        for f in files:
+                            shutil.copy2(os.path.join(root, f), os.path.join(target_dir, f))
+                    self.logger.info(f"++ Raw altsound pack folder mirrored safely to package workspace.")
+                continue
+                
             else:
                 self.logger.error("New Case! [%s]" % file)
                 break
