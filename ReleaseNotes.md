@@ -1,4 +1,20 @@
 # Table Packager Release Notes
+
+## What's New in Version 1.1.5
+
+/!\ You must uninstall current version before install a new one /!\
+### What's New
+
+- Added search for DMDDevice.ini entries
+- Added search for VPMAlias.txt entries
+- Added search for B2STableSettings.xml entries
+- Added search for PupPack entries
+- Added search for table .ini entries
+
+### Bug Fixes
+
+- Updated everything to work with VPX 10.8.0
+
 ## What's New in Version 1.1.4
 
 /!\ You must uninstall current version before install a new one /!\
