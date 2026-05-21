@@ -107,7 +107,7 @@ class PackagedTablesModel(Observable):
                                                       "Are you sure you want to delete package(s) '%s'" % (packages),
                                                       parent=viewer)
         if delConfirmed:
-            self.logger.info("--[Delete Package(s=]------------------")
+            self.logger.info("--[Delete Package(s)]------------------")
             for packageInfo in self.selectedPackage:
                 try:
                     os.unlink(
@@ -117,8 +117,20 @@ class PackagedTablesModel(Observable):
                     continue
                 self.logger.info("+ del %s" % (
                             self.baseModel.package_path + '/' + packageInfo['name'] + self.baseModel.package_extension))
+            
             self.logger.info("--[Done]------------------")
-        self.notify_all(self, events=['<<END_ACTION>>', '<<ENABLE_ALL>>'])  # update listeners
+            
+            # 1. Clear out old selection data from memory
+            self.__selectedPackage = []
+            
+            # 2. Call the update function to rescan your zip packages folder
+            self.update()
+            
+            # 3. Tell the UI panel to drop the blue highlight and unlock buttons
+            self.notify_all(self, events=['<<PACKAGE UNSELECTED>>', '<<END_ACTION>>', '<<ENABLE_ALL>>'])
+        else:
+            # If user clicked Cancel, just unlock the app interface
+            self.notify_all(self, events=['<<END_ACTION>>', '<<ENABLE_ALL>>'])
         self.baseModel.packagedTablesModel
 
     def backupPackages(self, viewer, backup_path):

@@ -1,10 +1,10 @@
 {
-  "working_dir": "C:/Users/DAVID/Documents/tablePackager",
+  "working_dir": ".",
   "visual_pinball_path": "C:/vPinball/VisualPinball",
-  "pinballX_path": "C:/pinballX",
+  "pinballX_path": "",
   "pinupSystem_path": "C:/vPinball/PinUPSystem",
-  "db_path": "C:/Users/DAVID/Documents/tablePackager/packager/database/puplookup.csv",
-  "manufacturer_path": "C:/Users/DAVID/Documents/tablePackager/packager/database/manufacturer.json",
+  "db_path": "./packager/database/puplookup.csv",
+  "manufacturer_path": "./packager/database/manufacturer.json",
   "font": [
     "Helvetica",
     10

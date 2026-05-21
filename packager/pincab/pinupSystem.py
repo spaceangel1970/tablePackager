@@ -1,3 +1,6 @@
+import os
+import shutil
+from pathlib import Path
 from packager.tools.toolbox import *
 from packager.model.package import Package
 
@@ -54,10 +57,8 @@ class PinUpSystem:
        # self.extract_file(package, product, 'GameInfo', 'media/Flyers Back', extension='.back', search_name=search_name)
         self.extract_file(package, product, 'Loading', 'media/Loading', search_name=search_name)
 
-        # --- FIXED CODE: COPIES RAW PUP PACK WITHOUT MANIFEST ERRORS ---
+        # --- RAW PUP PACK EXTRACTION WITHOUT MANIFEST ERRORS ---
         try:
-            import shutil
-            
             rom_field = package.get_field('visual pinball/info/romName')
             rom_names = []
             
@@ -86,13 +87,12 @@ class PinUpSystem:
                         if os.path.exists(destination_pup_dir):
                             shutil.rmtree(destination_pup_dir)
                         
-                        # Mirror the loose folders directly into the zip staging zone
                         shutil.copytree(target_pup_folder, destination_pup_dir)
-                        
                         self.logger.info(f"++ Raw PuP pack files mirrored safely to package staging workspace.")
                         
         except Exception as e:
             self.logger.error(f"Error copying local loose PuP folder assets: {e}")
+
     def deploy(self, package: Package, product: str) -> None:
         self.logger.info("* Deploy PinUp Media")
 
@@ -100,60 +100,64 @@ class PinUpSystem:
             self.logger.warning('PinupSystem not found(%s)' % self.pinupSystem_path)
             return
 
-        if not Path(self.baseModel.tmp_path + "/" + package.name).exists():
-            raise ValueError('Path not found (%s)' % self.baseModel.tmp_path + "/" + package.name)
+        package_base_path = os.path.normpath(os.path.join(self.baseModel.tmp_path, package.name))
+        if not os.path.exists(package_base_path):
+            raise ValueError('Path not found (%s)' % package_base_path)
 
-        copytree(self.logger,
-                 self.baseModel.tmp_path + "/" + package.name + "/Media/Audio",
-                 self.baseModel.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/Audio')
-        copytree(self.logger,
-                 self.baseModel.tmp_path + "/" + package.name + "/Media/AudioLaunch",
-                 self.baseModel.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/AudioLaunch')
-        copytree(self.logger,
-                 self.baseModel.tmp_path + "/" + package.name + "/Media/BackGlass",
-                 self.baseModel.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/BackGlass')
-        copytree(self.logger,
-                 self.baseModel.tmp_path + "/" + package.name + "/Media/DMD",
-                 self.baseModel.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/DMD')
-        copytree(self.logger,
-                 self.baseModel.tmp_path + "/" + package.name + "/Media/DMDVideos",
-                 self.baseModel.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/DMDVideos')
-        copytree(self.logger,
-                 self.baseModel.tmp_path + "/" + package.name + "/Media/HighScores",
-                 self.baseModel.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/HighScores')
-        copytree(self.logger,
-                 self.baseModel.tmp_path + "/" + package.name + "/Media/Instruction Cards",
-                 self.baseModel.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/GameHelp')
-        copytree(self.logger,
-                 self.baseModel.tmp_path + "/" + package.name + "/Media/PlayField",
-                 self.baseModel.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/PlayField')
-        copytree(self.logger,
-                 self.baseModel.tmp_path + "/" + package.name + "/Media/Topper",
-                 self.baseModel.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/Topper')
-        copytree(self.logger,
-                 self.baseModel.tmp_path + "/" + package.name + "/Media/TopperVideos",
-                 self.baseModel.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/Topper')
-        copytree(self.logger,
-                 self.baseModel.tmp_path + "/" + package.name + "/Media/Wheel",
-                 self.baseModel.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/Wheel')
-        copytree(self.logger,
-                 self.baseModel.tmp_path + "/" + package.name + "/Media/ScreenGrabs",
-                 self.baseModel.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/ScreenGrabs')
-        copytree(self.logger,
-                 self.baseModel.tmp_path + "/" + package.name + "/Media/TableVideos",
-                 self.baseModel.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/TableVideos')
-        copytree(self.logger,
-                 self.baseModel.tmp_path + "/" + package.name + "/Media/Flyers Inside",
-                 self.baseModel.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/GameInfo')
-        copytree(self.logger,
-                 self.baseModel.tmp_path + "/" + package.name + "/Media/Flyers Front",
-                 self.baseModel.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/GameInfo')
-        copytree(self.logger,
-                 self.baseModel.tmp_path + "/" + package.name + "/Media/Flyers Back",
-                 self.baseModel.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/GameInfo')
-        copytree(self.logger,
-                 self.baseModel.tmp_path + "/" + package.name + "/Media/Loading",
-                 self.baseModel.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/Loading')
+        # 1. --- STANDARD POPMEDIA FRONTEND ASSETS ---
+        copytree(self.logger, package_base_path + "/media/Audio", self.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/Audio')
+        copytree(self.logger, package_base_path + "/media/AudioLaunch", self.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/AudioLaunch')
+        copytree(self.logger, package_base_path + "/media/BackGlass", self.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/BackGlass')
+        copytree(self.logger, package_base_path + "/media/DMD", self.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/DMD')
+        copytree(self.logger, package_base_path + "/media/DMDVideos", self.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/DMDVideos')
+        copytree(self.logger, package_base_path + "/media/HighScores", self.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/HighScores')
+        copytree(self.logger, package_base_path + "/media/Instruction Cards", self.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/GameHelp')
+        copytree(self.logger, package_base_path + "/media/PlayField", self.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/PlayField')
+        copytree(self.logger, package_base_path + "/media/Topper", self.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/Topper')
+        copytree(self.logger, package_base_path + "/media/TopperVideos", self.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/Topper')
+        copytree(self.logger, package_base_path + "/media/Wheel", self.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/Wheel')
+        copytree(self.logger, package_base_path + "/media/ScreenGrabs", self.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/ScreenGrabs')
+        copytree(self.logger, package_base_path + "/media/TableVideos", self.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/TableVideos')
+        copytree(self.logger, package_base_path + "/media/Flyers Inside", self.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/GameInfo')
+        copytree(self.logger, package_base_path + "/media/Flyers Front", self.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/GameInfo')
+        copytree(self.logger, package_base_path + "/media/Flyers Back", self.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/GameInfo')
+        copytree(self.logger, package_base_path + "/media/Loading", self.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/Loading')
+
+        # 2. --- FIXED CODE: SAFE SURGICAL MERGE FOR PUP VIDEOS PACKS ---
+        pup_stage_dir = os.path.join(package_base_path, "media", "PuP")
+        if os.path.exists(pup_stage_dir) and os.path.isdir(pup_stage_dir):
+            self.logger.info("* Processing active PuP-Pack video directory merge allocations...")
+            global_pup_videos_base = os.path.normpath(os.path.join(self.pinupSystem_path, 'PUPVideos'))
+
+            for rom_folder in os.listdir(pup_stage_dir):
+                source_rom_path = os.path.join(pup_stage_dir, rom_folder)
+                target_rom_path = os.path.join(global_pup_videos_base, rom_folder)
+
+                if os.path.isdir(source_rom_path):
+                    os.makedirs(target_rom_path, exist_ok=True)
+                    self.logger.info(f"++ Merging structural pack layout files into destination: PUPVideos/{rom_folder}")
+
+                    # Walk through the archive pack and selectively drop/merge files natively
+                    for root, dirs, files in os.walk(source_rom_path):
+                        rel_path = os.path.relpath(root, start=source_rom_path)
+                        dest_sub_dir = os.path.normpath(os.path.join(target_rom_path, rel_path))
+                        os.makedirs(dest_sub_dir, exist_ok=True)
+
+                        for f in files:
+                            s_file = os.path.join(root, f)
+                            d_file = os.path.join(dest_sub_dir, f)
+
+                            # CRITICAL MERGE RULES:
+                            # 1. If the file doesn't exist on the target machine, copy it.
+                            # 2. Always overwrite layout files ('pupimages.txt', 'playlist.pup') so the new layout applies.
+                            # 3. Overwrite media files if the incoming asset file is newer.
+                            if (not os.path.exists(d_file) or 
+                                    f.lower() in ['pupimages.txt', 'playlist.pup', 'pup_screen_options.bat'] or 
+                                    os.path.getmtime(s_file) > os.path.getmtime(d_file)):
+                                try:
+                                    shutil.copy2(s_file, d_file)
+                                except Exception as file_err:
+                                    self.logger.error(f"   [PuP Merge Warning] Skip locked/unavailable file: {f}. Error: {file_err}")
 
     def delete(self, table_name: str, product: str):
         self.logger.info("* Delete PinUp Media")

@@ -157,18 +157,15 @@ class PupScanner:
                 self.logger.error(f"Error reading lookup database: {e}")
 
         # 4. SECOND PASS: Scan the local PUPVideos folder directly on your drive
-        # This will catch local folders like C:\vPinball\PinUPSystem\PUPVideos\BTILC
         pup_videos_path = os.path.join(self.baseModel.pinupSystem_path, 'PUPVideos')
         if os.path.exists(pup_videos_path):
             self.logger.info(f"Checking local file system path: {pup_videos_path}")
             try:
-                # Get all subdirectory names inside the PUPVideos folder
                 local_folders = [f for f in os.listdir(pup_videos_path) if os.path.isdir(os.path.join(pup_videos_path, f))]
                 
                 for folder in local_folders:
                     folder_lower = folder.lower()
                     for term in search_terms:
-                        # Direct match (e.g., 'btilc' search term matches the 'BTILC' directory)
                         if term == folder_lower or term in folder_lower:
                             self.logger.info(f"++ Direct Hit Found! Located local folder path: '{folder}'")
                             results.append(folder)
@@ -187,10 +184,7 @@ class PupScanner:
         return name
 
     def create_pup_archive(self, game_name: str) -> str:
-        """Create a pup package for the given game and return the path to the created archive (in tmp).
-
-        Returns empty string on failure.
-        """
+        """Create a pup package for the given game and return the path to the created archive (in tmp)."""
         try:
             package_name = self._sanitize(game_name)
             search_name = self._base_table_name(game_name)

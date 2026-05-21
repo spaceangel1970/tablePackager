@@ -185,5 +185,14 @@ class InstalledTablesModel(Observable):
 
     def delete_tables_end(self, context=None, success=True):
         self.logger.info("--[Done]------------------")
-        self.update()
-        self.notify_all(self, events=['<<END_ACTION>>', '<<ENABLE_ALL>>'])  # update listeners
+        
+        # 1. Reset our internal tracking selection states completely
+        self.__selectedTable = []
+        
+        # 2. Tell the UI to unlock all buttons and finish processing actions
+        self.notify_all(self, events=['<<TABLE UNSELECTED>>', '<<END_ACTION>>', '<<ENABLE_ALL>>'])
+        
+        # 3. FORCE the main UI loop to safely execute a refresh out-of-thread
+        # This acts exactly like a delayed automatic tap on your green reload button!
+        import tkinter
+        tkinter._default_root.after_idle(self.update)

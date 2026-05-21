@@ -1,6 +1,7 @@
 import os
 import shutil
 from pathlib import Path
+import xml.etree.ElementTree as ET
 from packager.tools.toolbox import *
 from packager.model.package import Package
 
@@ -246,12 +247,12 @@ class VPinMame:
         if os.path.exists(vpm_stage):
             for item in os.listdir(vpm_stage):
                 s = os.path.join(vpm_stage, item)
-                d = os.path.join(self.baseModel.visual_pinball_path, "VPinMAME", item)
+                d = os.path.normpath(os.path.join(self.baseModel.visual_pinball_path, "VPinMAME", item))
                 if os.path.isdir(s):
                     copytree(self.logger, s, d)
                 elif os.path.isfile(s):
                     if item == 'DmdDevice.ini':
-                        self.merge_dmd_ini(s, d)  # Safe custom merge instead of destructive copy
+                        self.merge_dmd_ini(s, d)
                     elif item == 'VPMAlias.txt':
                         self.merge_alias_file(s, d)
 
@@ -260,7 +261,7 @@ class VPinMame:
         if os.path.exists(tables_stage):
             for item in os.listdir(tables_stage):
                 s = os.path.join(tables_stage, item)
-                d = os.path.join(self.visual_pinball_path, "tables", item)
+                d = os.path.normpath(os.path.join(self.visual_pinball_path, "tables", item))
                 if os.path.isfile(s):
                     if item == 'B2STableSettings.xml':
                         self.merge_b2s_xml(s, d)
@@ -317,7 +318,6 @@ class VPinMame:
             with open(source_snippet, 'r', encoding='utf-8') as f:
                 snippet_lines = f.readlines()
 
-            # Find the bracketed header row name from the snippet file (e.g. "[clas1812abc]")
             target_header = ""
             for line in snippet_lines:
                 if line.strip().startswith('[') and line.strip().endswith(']'):
@@ -325,9 +325,8 @@ class VPinMame:
                     break
 
             if not target_header:
-                return  # Malformed snippet file containing no block header context
+                return
 
-            # Handle edge cases where the destination setup completely lacks a global INI file
             if not os.path.exists(target_global_file):
                 shutil.copy2(source_snippet, target_global_file)
                 self.logger.info("++ Global DmdDevice.ini missing on target. Created file from snippet profile.")
@@ -336,7 +335,6 @@ class VPinMame:
             with open(target_global_file, 'r', encoding='utf-8', errors='ignore') as f:
                 global_lines = f.readlines()
 
-            # Scan the cabinet machine file to see if this specific ROM segment already exists
             header_index = -1
             for idx, line in enumerate(global_lines):
                 if line.strip().lower() == target_header:
@@ -344,21 +342,17 @@ class VPinMame:
                     break
 
             if header_index != -1:
-                # The section block already exists on this cabinet. We need to cut out the old block and plug in ours.
-                # Find where the old block ends (next section header or EOF)
                 end_index = len(global_lines)
                 for idx in range(header_index + 1, len(global_lines)):
                     if global_lines[idx].strip().startswith('[') and global_lines[idx].strip().endswith(']'):
                         end_index = idx
                         break
                 
-                # Piece the file back together, substituting our custom snippet entries
                 updated_content = global_lines[:header_index] + snippet_lines + global_lines[end_index:]
                 with open(target_global_file, 'w', encoding='utf-8') as f:
                     f.writelines(updated_content)
                 self.logger.info(f"++ Successfully overwritten existing custom DMD block settings for {target_header} inside global INI.")
             else:
-                # The section is brand new to this cabinet machine. Safe to append right onto the bottom layout.
                 if global_lines and not global_lines[-1].endswith('\n'):
                     global_lines.append('\n')
                 global_lines.extend(snippet_lines)
@@ -371,62 +365,58 @@ class VPinMame:
             self.logger.error(f"[DMD INI Merge Error] Failed processing machine layout insertion: {str(e)}")
 
     def merge_b2s_xml(self, source_snippet, target_global_file):
-        """Gracefully merges or modifies specific ROM configuration nodes inside B2STableSettings.xml."""
+        """Surgically merges or updates a specific table node inside B2STableSettings.xml using a structural XML parser."""
         try:
             if not os.path.exists(source_snippet):
                 return
 
-            # Read the incoming snippet block configuration rules
-            with open(source_snippet, 'r', encoding='utf-8') as f:
-                snippet_content = f.read()
-
-            # Locate inner elements inside the root structural framework
-            start_idx = snippet_content.find('<B2STableSettings>') + len('<B2STableSettings>')
-            end_idx = snippet_content.rfind('</B2STableSettings>')
-            if start_idx == -1 or end_idx == -1:
-                return  # Malformed block profile snippet frame
+            # Parse incoming snippet tree element structure
+            snippet_tree = ET.parse(source_snippet)
+            snippet_root = snippet_tree.getroot()
             
-            inner_snippet = snippet_content[start_idx:end_idx].strip()
-            if not inner_snippet:
-                return
+            # Find the active single game sub-node inside the snippet framework (e.g., <clas1812abc>)
+            incoming_game_node = None
+            for child in snippet_root:
+                incoming_game_node = child
+                break
+                
+            if incoming_game_node is None:
+                return  # Empty snippet profile
+                
+            rom_tag_name = incoming_game_node.tag
 
-            # Isolate the explicit sub-node name (e.g., "<clas1812abc>")
-            first_bracket = inner_snippet.find('<')
-            next_bracket = inner_snippet.find('>')
-            if first_bracket == -1 or next_bracket == -1:
-                return
-            rom_tag = inner_snippet[first_bracket:next_bracket+1]  # returns "<clas1812abc>"
-            rom_close_tag = rom_tag.replace('<', '</')
-
-            # Handle blank/unconfigured target setups natively
+            # If global file path layout completely lacks a master document, generate it clean from our template source
             if not os.path.exists(target_global_file):
                 shutil.copy2(source_snippet, target_global_file)
+                self.logger.info("++ Global B2STableSettings.xml was missing. Initialized file using template snippet.")
                 return
 
-            with open(target_global_file, 'r', encoding='utf-8', errors='ignore') as f:
-                global_content = f.read()
+            # Parse the destination machine's true live configuration matrix
+            global_tree = ET.parse(target_global_file)
+            global_root = global_tree.getroot()
 
-            # If node settings already exist inside the cabinet machine, overwrite them cleanly
-            if rom_tag.lower() in global_content.lower():
-                g_start = global_content.lower().find(rom_tag.lower())
-                g_end = global_content.lower().find(rom_close_tag.lower()) + len(rom_close_tag)
-                
-                if g_start != -1 and g_end != -1:
-                    updated_content = global_content[:g_start] + inner_snippet + "\n  " + global_content[g_end:]
-                    with open(target_global_file, 'w', encoding='utf-8') as f:
-                        f.write(updated_content)
-                    self.logger.info(f"++ Successfully updated existing custom B2S XML profile fields for {rom_tag}")
+            # Look for an existing node with the exact same case-insensitive tag name
+            existing_node = None
+            for child in global_root:
+                if child.tag.lower() == rom_tag_name.lower():
+                    existing_node = child
+                    break
+
+            if existing_node is not None:
+                # Node profile exists! Clear it out and re-inject our synchronized backup nodes safely
+                global_root.remove(existing_node)
+                global_root.append(incoming_game_node)
+                self.logger.info(f"++ Surgically updated custom XML attributes for node: <{rom_tag_name}>")
             else:
-                # Node configuration layout is brand new; append it directly above the master closing footer block
-                insert_idx = global_content.rfind('</B2STableSettings>')
-                if insert_idx != -1:
-                    updated_content = global_content[:insert_idx] + "  " + inner_snippet + "\n" + global_content[insert_idx:]
-                    with open(target_global_file, 'w', encoding='utf-8') as f:
-                        f.write(updated_content)
-                    self.logger.info(f"++ Successfully injected new custom B2S XML block parameters for {rom_tag}")
+                # Brand new game layout addition. Safe to append right to the root stack
+                global_root.append(incoming_game_node)
+                self.logger.info(f"++ Injected brand new custom configuration layout node: <{rom_tag_name}>")
+
+            # Write tree updates cleanly back to the global destination file path
+            global_tree.write(target_global_file, encoding='utf-8', xml_declaration=True)
 
         except Exception as e:
-            self.logger.error(f"[B2S XML Merge Error] Failed inserting target parameters: {str(e)}")
+            self.logger.error(f"[B2S XML Merge Error] Error merging XML profiles structure natively: {str(e)}")
 
     def delete(self, tableName: str, rom_list: list) -> None:
         if rom_list is None:

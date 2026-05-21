@@ -48,7 +48,7 @@ class ConfigViewer(Frame):
                                               command=self.on_choose_pinball_x_path_dir)
         self.__pinballXPathPathDirBt.grid(column=2, row=1, sticky=E, padx=2, pady=2)
 
-        self.__pinupSystemPathLabel = Label(self.__infoFrame, text="Pinball X path: ")
+        self.__pinupSystemPathLabel = Label(self.__infoFrame, text="PinUP System path: ")
         self.__pinupSystemPathLabel.grid(column=0, row=2, sticky='W', padx=2, pady=2)
         self.__pinupSystemPathEntry = Entry(self.__infoFrame)
         self.__pinupSystemPathEntry.grid(column=1, row=2, padx=2, pady=2)

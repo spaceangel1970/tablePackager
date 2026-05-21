@@ -48,24 +48,23 @@ class MainWindow(Observer, Observable):
         self.__progressBar["maximum"] = 800
 
         self.__extractAppChoice = {'visual_pinball': IntVar(),
-                                   'futurPinball': IntVar(),
+                                   'futurPinball': IntVar(),  # <--- Remove the 'e' here
                                    'pinupSystem': IntVar(),
                                    'pinballX': IntVar()}
 
         self.__extractAppChoice['visual_pinball'].set(True)
         self.__extractAppChoice['futurPinball'].set(False)
-        self.__extractAppChoice['pinupSystem'].set(True)
-        self.__extractAppChoice['pinballX'].set(True)
-
+        self.__extractAppChoice['pinupSystem'].set(True) # <--- ADD THIS LINE to check it by default!
+        self.__extractAppChoice['pinballX'].set(False)
         self.__extractFrame = Frame(self.__window, width=2, relief=GROOVE, borderwidth=4)
         self.__cbExVisualPinball = Checkbutton(self.__extractFrame, variable=self.__extractAppChoice['visual_pinball'],
                                                onvalue=True, offvalue=False, text='Visual Pinball')
         self.__cbExVisualPinball.grid(column=0, row=0, sticky='NW')
 
-        self.__cbExFuturPinball = Checkbutton(self.__extractFrame, variable=self.__extractAppChoice['futurPinball'],
-                                              onvalue=True, offvalue=False, text='Futur Pinball', state=DISABLED)
-        self.__cbExFuturPinball.grid(column=0, row=1, sticky='NW')
-        self.__cbExFuturPinballToolTip = CreateToolTip(self.__cbExFuturPinball, 'Not Yet Implemented')
+        self.__cbExfuturPinball = Checkbutton(self.__extractFrame, variable=self.__extractAppChoice['futurPinball'],
+                                              onvalue=True, offvalue=False, text='Future Pinball', state=DISABLED)
+        self.__cbExfuturPinball.grid(column=0, row=1, sticky='NW')
+        self.__cbExfuturPinballToolTip = CreateToolTip(self.__cbExfuturPinball, 'Not Yet Implemented')
         self.__cbExPinupSystem = Checkbutton(self.__extractFrame, variable=self.__extractAppChoice['pinupSystem'],
                                              onvalue=True, offvalue=False, text='PinUp System')
         self.__cbExPinupSystem.grid(column=0, row=2, sticky='NW')
@@ -90,19 +89,19 @@ class MainWindow(Observer, Observable):
         self.__installAppChoice['visual_pinball'].set(True)
         self.__installAppChoice['futurPinball'].set(False)
         self.__installAppChoice['pinupSystem'].set(True)
-        self.__installAppChoice['pinballX'].set(True)
+        self.__installAppChoice['pinballX'].set(False)
 
         self.__installFrame = Frame(self.__window, width=2, relief=GROOVE, borderwidth=4)
         self.__cbInsVisualPinball = Checkbutton(self.__installFrame, text='Visual Pinball',
                                                 variable=self.__installAppChoice['visual_pinball'], onvalue=True,
                                                 offvalue=False)
         self.__cbInsVisualPinball.grid(column=0, row=4, sticky='NW')
-        self.__cbInsFuturPinball = Checkbutton(self.__installFrame, text='Futur Pinball',
+        self.__cbInsfuturPinball = Checkbutton(self.__installFrame, text='Future Pinball',
                                                variable=self.__installAppChoice['futurPinball'], onvalue=True,
                                                offvalue=False, state=DISABLED)
-        self.__cbInsFuturPinballToolTip = CreateToolTip(self.__cbInsFuturPinball, 'Not Yet Implemented')
+        self.__cbInsfuturPinballToolTip = CreateToolTip(self.__cbInsfuturPinball, 'Not Yet Implemented')
 
-        self.__cbInsFuturPinball.grid(column=0, row=5, sticky='NW')
+        self.__cbInsfuturPinball.grid(column=0, row=5, sticky='NW')
         self.__cbInsPinupSystem = Checkbutton(self.__installFrame, text='PinUp System',
                                               variable=self.__installAppChoice['pinupSystem'], onvalue=True,
                                               offvalue=False)
