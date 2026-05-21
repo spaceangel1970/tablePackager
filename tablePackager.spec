@@ -5,7 +5,7 @@ a = Analysis(
     ['packager\\tablePackager.py'],
     pathex=[],
     binaries=[],
-    datas=[('packager/images', 'packager/images'), ('packager/images', 'lib/packager/images')],
+    datas=[],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
