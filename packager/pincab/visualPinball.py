@@ -3,6 +3,7 @@ import shutil
 from pathlib import Path
 import subprocess
 import tkinter
+import re
 from packager.tools.toolbox import *
 from packager.model.package import Package
 
@@ -49,8 +50,6 @@ class VisualPinball:
         pov_file = Path(self.visual_pinball_path + '/tables/' + package.name + '.pov')
         vpt_file = Path(self.visual_pinball_path + '/tables/' + package.name + '.vpt')
         directb2s_file = Path(self.visual_pinball_path + "/tables/" + vpx_file.stem + '.directb2s')
-        music_file = Path(
-            self.visual_pinball_path + "/Music/" + vpx_file.stem + '.mp3')  # TODO: store music into media/Audio?
 
         if os.path.exists(vpx_file):
             vp_file = vpx_file
@@ -88,8 +87,38 @@ class VisualPinball:
             if pov_file.exists():
                 package.add_file(pov_file, 'visual pinball/tables')
 
-        if music_file.exists():
-            package.add_file(music_file, 'media/Audio')
+        # --- DYNAMIC MUSIC SCANNING ENGINE ---
+        self.logger.info("--------------------------------------------------")
+        self.logger.info("* [AUDIO SCAN] Checking table script for external music...")
+        
+        found_music_tracks = self.extract_music_assets(vp_file)
+        music_base_dir = os.path.join(self.visual_pinball_path, "Music")
+        
+        if found_music_tracks:
+            self.logger.info(f"+ Found {len(found_music_tracks)} track references inside table script.")
+            
+            packed_count = 0
+            for track_path in found_music_tracks:
+                # Resolve absolute path on disk safely
+                full_music_path = Path(os.path.normpath(os.path.join(music_base_dir, track_path)))
+                
+                if full_music_path.exists() and full_music_path.is_file():
+                    # Preserve relative subfolder structure inside Music/ if any
+                    relative_dest = os.path.dirname(track_path)
+                    target_archive_dir = f"visual pinball/Music/{relative_dest}" if relative_dest else "visual pinball/Music"
+                    
+                    self.logger.info(f"  -> BUNDLING: '{track_path}'")
+                    package.add_file(full_music_path, target_archive_dir)
+                    packed_count += 1
+                else:
+                    # Highlight missing files as a warning in the UI log
+                    self.logger.warning(f"  ! MISSING ON DISK: '{track_path}' (Expected in: {music_base_dir})")
+            
+            self.logger.info(f"* Successfully archived {packed_count} of {len(found_music_tracks)} music tracks.")
+        else:
+            self.logger.info("- No external background music (.mp3/.ogg) found in this table.")
+            
+        self.logger.info("--------------------------------------------------")
 
     def deploy(self, package: Package) -> None:
         self.logger.info("* Visual Pinball X files")
@@ -99,9 +128,17 @@ class VisualPinball:
         if not Path(self.baseModel.tmp_path + "/" + package.name).exists():
             raise ValueError('Package Tree not found (%s)' % (self.baseModel.tmp_path + "/" + package.name))
 
+        # Deploy tables assets
         copytree(self.logger,
                  self.baseModel.tmp_path + "/" + package.name + "/visual pinball/tables",
                  self.baseModel.visual_pinball_path + "/tables")
+                 
+        # Deploy music assets dynamically if packed inside the archive structure
+        archive_music_path = os.path.join(self.baseModel.tmp_path, package.name, "visual pinball", "Music")
+        if os.path.exists(archive_music_path):
+            self.logger.info("* Deploying audio tracking assets to local directory...")
+            copytree(self.logger, archive_music_path, os.path.join(self.baseModel.visual_pinball_path, "Music"))
+            
         return True
 
     def delete(self, table_name: str) -> None:
@@ -114,8 +151,6 @@ class VisualPinball:
         ini_file = Path(self.visual_pinball_path + '/tables/' + table_name + '.ini')
         vpt_file = Path(self.visual_pinball_path + '/tables/' + table_name + '.vpt')
         directb2s_file = Path(self.visual_pinball_path + "/tables/" + vpx_file.stem + '.directb2s')
-        music_file = Path(
-            self.visual_pinball_path + "/Music/" + vpx_file.stem + '.mp3')  # TODO: store music into media/Audio?
 
         if vpx_file.exists():
             self.logger.info("- remove %s file" % vpx_file)
@@ -132,52 +167,72 @@ class VisualPinball:
         if directb2s_file.exists():
             self.logger.info("- remove %s file" % directb2s_file)
             os.remove(directb2s_file)
-        if music_file.exists():
-            self.logger.info("- remove %s file" % music_file)
-            os.remove(music_file)
+            
+        # Clean local music folders matched directly to table strings
+        found_music_tracks = self.extract_music_assets(vpx_file if vpx_file.exists() else vpt_file)
+        music_base_dir = os.path.join(self.visual_pinball_path, "Music")
+        for track_path in found_music_tracks:
+            full_music_path = Path(os.path.normpath(os.path.join(music_base_dir, track_path)))
+            if full_music_path.exists() and full_music_path.is_file():
+                self.logger.info("- remove music track asset %s" % full_music_path)
+                os.remove(full_music_path)
 
     def extract_rom_name(self, vpt_file: Path) -> list:
-        import re
-        
         active_roms = []
-        
         try:
-            # Read the raw file bytes directly
             with open(vpt_file, 'rb') as f:
                 content = f.read()
-                
-            # Decode to text, ignoring non-text binary bytes cleanly
             text_content = content.decode('utf-8', errors='ignore')
-            
-            # --- FAILSAFE COMMENT-AWARE REGEX ENGINE ---
-            # 1. ^[ \t]* checks for whitespace or tabs at the start of a row
-            # 2. (?!') Lookahead instantly skips the match if the line is commented out with a single quote
-            # 3. Matches and extracts the alpha-numeric target name safely inside single or double quotes
             
             p_pattern = r"^[ \t]*(?!')(?:(?:Public|Private)\s+)?(?:Dim)?\s*pGameName\s*=\s*[\"']([a-zA-Z0-9_]+)[\"']"
             standard_pattern = r"^[ \t]*(?!')(?:(?:Public|Private)\s+)?(?:Const|Dim)?\s*(?:cGameName|RomSet|GameName)\s*=\s*[\"']([a-zA-Z0-9_]+)[\"']"
             
-            # Helper to run match extractions on active code lines only
             def process_matches(regex_pattern):
-                # re.MULTILINE links the '^' anchor to the start of every text line break inside the table string
                 for match in re.finditer(regex_pattern, text_content, re.IGNORECASE | re.MULTILINE):
                     rom_name = match.group(1).strip()
                     if rom_name not in active_roms:
                         active_roms.append(rom_name)
 
-            # Look for active pGameName definitions first (Highest Priority for PinUp System paths)
             process_matches(p_pattern)
-            
-            # Look for active fallback hardware definitions next (Standard Priority)
             process_matches(standard_pattern)
                         
         except Exception as e:
             self.logger.error(f"Fallback byte-scanner error: {str(e)}")
 
-        # Clean out "yourgame" generic code placeholders
         active_roms = [r for r in active_roms if r.lower() != "yourgame"]
-
         return active_roms
+
+    def extract_music_assets(self, vpt_file: Path) -> list:
+        """Reads the raw table binary file and extracts all active .mp3 and .ogg paths inside quotation marks."""
+        discovered_tracks = []
+        if not vpt_file.exists():
+            return discovered_tracks
+            
+        try:
+            with open(vpt_file, 'rb') as f:
+                content = f.read()
+            text_content = content.decode('utf-8', errors='ignore')
+            
+            # This regex filters active lines (skipping lines starting with a comment quote)
+            # and extracts text matching something inside quotes that terminates with .mp3 or .ogg
+            music_pattern = r"^[ \t]*(?!')[^'\r\n]*[\"']([^\"'\r\n]+\.(?:mp3|ogg))[\"']"
+            
+            for match in re.finditer(music_pattern, text_content, re.IGNORECASE | re.MULTILINE):
+                track_path = match.group(1).strip()
+                
+                # Normalize slashes for safe Windows parsing
+                track_path = track_path.replace('\\', '/')
+                
+                # CRITICAL FIX: Strip any leading slashes so os.path.join doesn't break root path merging
+                track_path = track_path.lstrip('/')
+                
+                if track_path and track_path not in discovered_tracks:
+                    discovered_tracks.append(track_path)
+                    
+        except Exception as e:
+            self.logger.error(f"Audio script scanner initialization error: {e}")
+            
+        return discovered_tracks
 
     def extract_table_name(self, vpt_file: Path) -> list:
         return extract_string_from_binary_file(vpt_file, br'TableName[ ]*=[ ]*"([a-zA-Z0-9_]+)"')

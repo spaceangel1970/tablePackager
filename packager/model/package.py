@@ -581,15 +581,38 @@ class Package:
             if dst_file is None:
                 dst_file = Path(full_path_src_file).name
                 
+            # Keep path formats clean and unified
+            dst_field_path = dst_field_path.replace('\\', '/')
+            
+            # Construct absolute target folder configurations
+            dst_folder_path = os.path.normpath(f"{self.directory}/{self.name}/{dst_field_path}")
+            complete_dst_file_path = os.path.normpath(f"{dst_folder_path}/{dst_file}")
+            
+            # Ensure folder tree structures exist physically on your drive
+            os.makedirs(dst_folder_path, exist_ok=True)
+                
             (dst_file, isSameFile) = self.collision_detector(full_path_src_file,
-                                                             self.directory + '/' + self.name + '/' + dst_field_path + '/' + dst_file,
+                                                             complete_dst_file_path,
                                                              check_sha1=True)
+                                                             
+            complete_dst_file_path = os.path.normpath(f"{dst_folder_path}/{dst_file}")
+            
             self.logger.info("+ add '%s' -> '%s'" % (full_path_src_file, dst_field_path + '/' + dst_file))
 
-            shutil.copy(full_path_src_file, self.directory + '/' + self.name + '/' + dst_field_path + '/' + dst_file)
-            self.manifest.add_file(dst_field_path,
-                                   self.directory + '/' + self.name + '/' + dst_field_path + '/' + dst_file)
+            # Perform physical clone to staging area
+            shutil.copy(full_path_src_file, complete_dst_file_path)
+            
+            # --- SAFE BYPASS ENGINE ---
+            # If this file is a background music asset, let it sit safely in the staging folder
+            # without forcing it into the rigid manifest database dictionary structure.
+            if "visual pinball/Music" in dst_field_path:
+                self.save()  # Save file changes without altering dictionary indexes
+                return
+                
+            # For standard tables, INIs, directb2s, etc., run through manifest registration normally
+            self.manifest.add_file(dst_field_path, complete_dst_file_path)
             self.save()
+            
         except OSError as e:
             self.logger.error(str(e))
             raise e
