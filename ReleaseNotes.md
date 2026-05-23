@@ -11,6 +11,7 @@
 - Added search for PupPack entries
 - Added search for table .ini POV files
 - Added search for table .res Custom files
+- Added external music file search
 
 ### Bug Fixes
 
