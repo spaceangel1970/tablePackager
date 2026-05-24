@@ -2,8 +2,11 @@ import os
 import shutil
 from pathlib import Path
 import subprocess
+import tempfile
 import tkinter
 import re
+import copy
+import xml.etree.ElementTree as ET
 from packager.tools.toolbox import *
 from packager.model.package import Package
 
@@ -39,6 +42,8 @@ class VisualPinball:
         else:
             raise ValueError('table not found (%s) (vpt or vpx)' % self.visual_pinball_path + '/tables/' + package.name)
         return self.extract_rom_name(vp_file)
+    
+    
 
     def extract(self, package: Package) -> None:
         if not os.path.exists(self.visual_pinball_path):
@@ -94,6 +99,8 @@ class VisualPinball:
 
             if pov_file.exists():
                 package.add_file(pov_file, 'visual pinball/tables')
+
+        self._extract_b2s_table_settings(package, rom)
 
         # --- DYNAMIC MUSIC SCANNING ENGINE ---
         self.logger.info("--------------------------------------------------")
@@ -226,6 +233,14 @@ class VisualPinball:
         if directb2s_file.exists():
             self.logger.info("- remove %s file" % directb2s_file)
             os.remove(directb2s_file)
+
+            # --- B2S TABLE SETTINGS ---
+        b2s_settings_file = Path(self.visual_pinball_path + "/tables/" + vpx_file.stem + '.xml')
+        if b2s_settings_file.exists():
+            self.logger.info(f"+ Found B2STableSettings.xml: {b2s_settings_file.name}")
+            package.add_file(b2s_settings_file, 'visual pinball/tables')
+        else:
+            self.logger.info("- No B2STableSettings.xml found for this table")
             
         # Clean local music folders matched directly to table strings
         found_music_tracks = self.extract_music_assets(vpx_file if vpx_file.exists() else vpt_file)
@@ -292,3 +307,43 @@ class VisualPinball:
         cmd_line = ["%s/VPinballX.exe" % self.visual_pinball_path, "-pov", vp_file]
         self.logger.info("%s/VPinballX.exe -pov %s" % (self.visual_pinball_path, vp_file))
         subprocess.call(cmd_line)
+
+    def _extract_b2s_table_settings(self, package: Package, rom_names: list) -> None:
+        if not rom_names:
+            return
+
+        global_b2s_path = os.path.join(self.visual_pinball_path, 'tables', 'B2STableSettings.xml')
+        if not os.path.exists(global_b2s_path):
+            self.logger.info("- No global B2STableSettings.xml found")
+            return
+
+        try:
+            tree = ET.parse(global_b2s_path)
+            root = tree.getroot()
+            snippet_root = ET.Element('B2STableSettings')
+            added = False
+            rom_names_lower = [name.lower() for name in rom_names]
+
+            for child in root:
+                if child.tag.lower() in rom_names_lower:
+                    snippet_root.append(copy.deepcopy(child))
+                    self.logger.info(f"+ Found B2STableSettings entry for ROM '{child.tag}'")
+                    added = True
+
+            if not added:
+                self.logger.info("- No matching B2STableSettings entry found for extracted ROM names")
+                return
+
+            tmp_path = None
+            try:
+                tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.xml')
+                tmp_path = tmp_file.name
+                tmp_file.close()
+                ET.ElementTree(snippet_root).write(tmp_path, encoding='utf-8', xml_declaration=True)
+                package.add_file(tmp_path, 'visual pinball/tables', dst_file='B2STableSettings.xml')
+            finally:
+                if tmp_path and os.path.exists(tmp_path):
+                    os.remove(tmp_path)
+
+        except Exception as e:
+            self.logger.error(f"[B2S XML EXTRACT ERROR] {str(e)}")

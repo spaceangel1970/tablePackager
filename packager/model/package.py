@@ -57,6 +57,7 @@ class Manifest:
         self.content['visual pinball']['tables'] = []
         self.content['visual pinball']['info'] = collections.OrderedDict()
         self.content['visual pinball']['info']['romName'] = ''
+        self.content['visual pinball']['Music'] = []
 
         self.content['UltraDMD'] = collections.OrderedDict()
         self.content['UltraDMD']['content'] = []
@@ -317,9 +318,10 @@ class Package:
         self.__manifest = Manifest(self.__name, self.baseModel.package_version)
         self.__manifest.new()  
         
-        # --- ADD Music Base Structure Hook Before Directory Tree Build ---
-        if 'Music' not in self.__manifest.content['visual pinball']:
-            self.__manifest.content['visual pinball']['Music'] = collections.OrderedDict()
+        # --- Ensure Music is a list so package merger and manifest expectations remain consistent ---
+        if 'Music' not in self.__manifest.content['visual pinball'] or \
+           not isinstance(self.__manifest.content['visual pinball']['Music'], list):
+            self.__manifest.content['visual pinball']['Music'] = []
 
         self.build_tree(self.directory + '/' + self.__name, self.manifest.content)
         self.__manifest.save(self.directory)
