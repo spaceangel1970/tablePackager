@@ -1,4 +1,5 @@
 import json
+import traceback
 from tkinter import messagebox
 from packager.model.package import *
 
@@ -121,7 +122,9 @@ class InstalledTablesModel(Observable):
                             self.baseModel.package_path)
 
             except Exception as e:
-                messagebox.showerror('Backup Package', str(e))
+                import traceback
+                traceback.print_exc()  # <-- Indented 4 spaces to the right
+                # messagebox.showerror('Backup Package', str(e))
                 return False
         clean_dir(self.baseModel.tmp_path)
         return True

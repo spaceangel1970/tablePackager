@@ -3,6 +3,7 @@ import os
 import collections
 import json
 import shutil
+import collections  # <-- ADD THIS LINE HERE
 import os.path
 import time
 from pathlib import *
@@ -223,7 +224,7 @@ class Manifest:
 
         (file, content) = self.get_file(field_path, Path(full_path_src_file).name)
         if file is not None:
-            sha1=sha1sum(full_path_src_file)
+            sha1 = sha1sum(full_path_src_file)
             if file['file']['sha1'] != sha1:
                 logging.warning("! file '%s/%s' changed" % (Path(full_path_src_file).name, field_path))
                 file['file']['lastmod'] = mtime2IsoStr(os.path.getmtime(full_path_src_file))  
@@ -243,22 +244,24 @@ class Manifest:
         normalized_path = field_path.replace('PuP Pack', 'PuP')
         field_list = normalized_path.split('/')
         content = self.__content
-        for field_type in field_list:
-            content = content[field_type]
+        
+        # --- DYNAMIC NESTED BRANCH CREATION ---
+        for index, field_type in enumerate(field_list):
+            if field_type == '': 
+                continue
+            
+            # If we are at the very last branch item, it needs to be our file storage list
+            if index == len(field_list) - 1:
+                if field_type not in content:
+                    content[field_type] = []
+                content = content[field_type]
+            else:
+                # If an intermediate dictionary layout structure doesn't exist yet, build it
+                if field_type not in content:
+                    content[field_type] = collections.OrderedDict()
+                content = content[field_type]
+                
         content.append({'file': file})
-
-    def move_file(self, src_file: str, src_field_path: str, dst_field_path: str) -> None:
-        (file, content) = self.get_file(src_field_path, src_file)
-        if file is None:
-            return
-
-        content.remove(file)
-        normalized_dst = dst_field_path.replace('PuP Pack', 'PuP')
-        field_list = normalized_dst.split('/')
-        content = self.__content
-        for type in field_list:
-            content = content[type]
-        content.append(file)
 
     def rename_file(self, field_path: str, src_file: str, dst_file: str) -> bool:
         (file, content) = self.get_file(field_path, src_file)
@@ -308,10 +311,16 @@ class Package:
         return self.baseModel.logger
 
     # create empty package
+    # create empty package
     def new(self, package_dir):
         self.__directory = package_dir
         self.__manifest = Manifest(self.__name, self.baseModel.package_version)
         self.__manifest.new()  
+        
+        # --- ADD Music Base Structure Hook Before Directory Tree Build ---
+        if 'Music' not in self.__manifest.content['visual pinball']:
+            self.__manifest.content['visual pinball']['Music'] = collections.OrderedDict()
+
         self.build_tree(self.directory + '/' + self.__name, self.manifest.content)
         self.__manifest.save(self.directory)
 
@@ -602,14 +611,9 @@ class Package:
             # Perform physical clone to staging area
             shutil.copy(full_path_src_file, complete_dst_file_path)
             
-            # --- SAFE BYPASS ENGINE ---
-            # If this file is a background music asset, let it sit safely in the staging folder
-            # without forcing it into the rigid manifest database dictionary structure.
-            if "visual pinball/Music" in dst_field_path:
-                self.save()  # Save file changes without altering dictionary indexes
-                return
-                
-            # For standard tables, INIs, directb2s, etc., run through manifest registration normally
+            # --- FIXED REGISTRATION ENGINE ---
+            # Music files are now permitted to stream through and log themselves 
+            # properly to index hooks so the UI Tree View can see them!
             self.manifest.add_file(dst_field_path, complete_dst_file_path)
             self.save()
             

@@ -8,55 +8,47 @@ import zipfile
 import threading
 import sys
 import hashlib
-import os.path
 import time
 import math
 import datetime
-import time
 import json
-from time import mktime
-
 from pathlib import Path
 
-
-def clean_dir(dir: str):
+def clean_dir(dir_path: str):
     try:
-        shutil.rmtree(dir, ignore_errors=True)
-        os.makedirs(dir, exist_ok=True)
-    except PermissionError as err:
-        print("Error (%s)" % format(err))
-    except:
-        print("Unexpected error:", sys.exc_info()[0])
+        if os.path.exists(dir_path):
+            shutil.rmtree(dir_path, ignore_errors=False)
+        os.makedirs(dir_path, exist_ok=True)
+    except Exception as err:
+        print(f"Error cleaning directory {dir_path}: {err}")
 
 
 def setReadOnlyFile(file):
     if os.path.exists(file):
-        fileAtt = os.stat(file)[0]
         os.chmod(file, stat.S_IREAD)
 
 
 def setReadWriteFile(file):
     if os.path.exists(file):
-        fileAtt = os.stat(file)[0]
-        if not fileAtt & stat.S_IWRITE:  # File is read-only, so make it writeable
+        fileAtt = os.stat(file).st_mode
+        if not fileAtt & stat.S_IWRITE:
             os.chmod(file, stat.S_IWRITE)
 
 
 def is_read_only_file(file):
     if os.path.exists(file):
-        fileAtt = os.stat(file)[0]
+        fileAtt = os.stat(file).st_mode
         return not fileAtt & stat.S_IWRITE
     return False
 
 
-# https://stackoverflow.com/questions/1868714/how-do-i-copy-an-entire-directory-of-files-into-an-existing-directory-using-pyth
-def copytree(logger, src:str, dst:str, symlinks:bool=False, ignore:bool=None):
+def copytree(logger, src: str, dst: str, symlinks: bool = False, ignore: bool = None):
     if not os.path.exists(dst):
-        os.makedirs(dst)
+        os.makedirs(dst, exist_ok=True)
     for item in os.listdir(src):
-        src_path = src + '/' + item  # os.path.join(src, item)
-        dst_path = dst + '/' + item  # os.path.join(dst, item)
-        logger.info("+ deploy %s" % dst_path)
+        src_path = os.path.join(src, item)
+        dst_path = os.path.join(dst, item)
+        logger.info(f"+ deploy {dst_path}")
         if os.path.isdir(src_path):
             copytree(logger, src_path, dst_path, symlinks, ignore)
         else:
@@ -66,23 +58,18 @@ def copytree(logger, src:str, dst:str, symlinks:bool=False, ignore:bool=None):
 
 def extract_string_from_binary_file(vpx_file: str, pattern: str) -> list:
     roms = []
-    p = re.compile(pattern)
-    with open(vpx_file, 'rb', 0) as file, mmap.mmap(file.fileno(), 0, access=mmap.ACCESS_READ) as s:
-        m = re.findall(p, s)
-        if m is None:
-            return []
-
-        for rom in m:
-            roms.append(rom.decode('ascii'))
-        return roms
+    p = re.compile(pattern.encode('ascii') if isinstance(pattern, str) else pattern)
+    if not os.path.exists(vpx_file) or os.path.getsize(vpx_file) == 0:
+        return []
+    with open(vpx_file, 'rb') as file:
+        with mmap.mmap(file.fileno(), 0, access=mmap.ACCESS_READ) as s:
+            m = p.findall(s)
+            for rom in m:
+                roms.append(rom.decode('ascii', errors='ignore'))
+    return list(set(roms))  # Deduplicate findings cleanly
 
 
 def sha1sum(filename: str) -> str:
-    """
-    compute file sha1
-    :param filename:
-    :return:
-    """
     h = hashlib.sha1()
     b = bytearray(128 * 1024)
     mv = memoryview(b)
@@ -92,38 +79,40 @@ def sha1sum(filename: str) -> str:
     return h.hexdigest()
 
 
-def zip_dir(path: str, ziph: object) -> None:
+def zip_dir(path: str, ziph: zipfile.ZipFile) -> None:
+    # 1. Force the root collection anchor to be an absolute, fully resolved path
+    base_anchor = Path(path).resolve()
+    parent_anchor = base_anchor.parent
+
     for root, dirs, files in os.walk(path):
-        for dir in dirs:
-            ziph.write(os.path.join(root, dir),
-                       Path(os.path.join(root, dir)).relative_to(Path(path).parents[0]))
-        for file in files:
-            ziph.write(os.path.join(root, file),
-                       Path(os.path.join(root, file)).relative_to(Path(path).parents[0]))
+        # 2. Convert directories to absolute paths before finding the relative layout path
+        for dir_name in dirs:
+            full_dir_path = Path(os.path.join(root, dir_name)).resolve()
+            archive_name = str(full_dir_path.relative_to(parent_anchor))
+            ziph.write(str(full_dir_path), archive_name)
+            
+        # 3. Convert files to absolute paths before finding the relative layout path
+        for file_name in files:
+            full_file_path = Path(os.path.join(root, file_name)).resolve()
+            archive_name = str(full_file_path.relative_to(parent_anchor))
+            ziph.write(str(full_file_path), archive_name)
 
 
 def zip_file(src: str) -> None:
-    zipf = zipfile.ZipFile(src + '.zip', 'w', zipfile.ZIP_DEFLATED)
-    zipf.write(src)
-    zipf.close()
+    with zipfile.ZipFile(src + '.zip', 'w', zipfile.ZIP_DEFLATED) as zipf:
+        zipf.write(src, os.path.basename(src))
 
 
 def pack(src: str, dest: str, pack_name: str) -> None:
-    zipf = zipfile.ZipFile(dest + '/' + pack_name, 'w', zipfile.ZIP_DEFLATED)
-    zip_dir(src, zipf)
-    zipf.close()
+    os.makedirs(dest, exist_ok=True)
+    with zipfile.ZipFile(os.path.join(dest, pack_name), 'w', zipfile.ZIP_DEFLATED) as zipf:
+        zip_dir(src, zipf)
 
 
 def unpack(src: str, dest: str) -> None:
-    """
-    unzip src file to dest dire
-    :param src:
-    :param dest:
-    :return:
-    """
-    zipf = zipfile.ZipFile(src, 'r')
-    zipf.extractall(dest)
-    zipf.close()
+    os.makedirs(dest, exist_ok=True)
+    with zipfile.ZipFile(src, 'r') as zipf:
+        zipf.extractall(dest)
 
 
 def convert_size(size_bytes):
@@ -133,102 +122,87 @@ def convert_size(size_bytes):
     i = int(math.floor(math.log(size_bytes, 1024)))
     p = math.pow(1024, i)
     s = round(size_bytes / p, 2)
-    return "%s %s" % (s, size_name[i])
+    return f"{s} {size_name[i]}"
 
 
-# UTC Time -> '2019-01-28T22:16:15.631186+00:00'
 def utcTime2IsoStr():
     return datetime.datetime.now(datetime.timezone.utc).isoformat()
 
+
 def strIsoUTCTime2DateTime(strIsoTime):
-    """ '2019-01-28T22:16:15.631186+00:00' -> datetime"""
-    # Fix Python 3.6- Iso Date Parsing +00:00 => +0000
-    tzInfo = strIsoTime.rsplit(':', 1)
-    strIsoTime = ''.join(tzInfo)
+    """
+    Converts an ISO UTC time string to a datetime object.
+    Heals malformed timestamps missing a colon between minutes and seconds.
+    """
+    if isinstance(strIsoTime, str):
+        if 'T' in strIsoTime and '.' in strIsoTime:
+            date_part, time_remainder = strIsoTime.split('T', 1)
+            time_part, micro_part = time_remainder.split('.', 1)
+            
+            if time_part.count(':') == 1:
+                parts = time_part.split(':')
+                hour = parts[0]
+                min_sec = parts[1]
+                if len(min_sec) == 4:  # MMSS
+                    corrected_time_part = f"{hour}:{min_sec[:2]}:{min_sec[2:]}"
+                    strIsoTime = f"{date_part}T{corrected_time_part}.{micro_part}"
+
+    # Fixed NameError by referencing nested datetime namespace module directly
     stime = time.strptime(strIsoTime, "%Y-%m-%dT%H:%M:%S.%f%z")
-    return datetime.datetime.fromtimestamp(time.mktime(stime))
+    return datetime.datetime.fromtimestamp(time.mktime(stime), datetime.timezone.utc)
 
 
-# mtime2IsoStr(os.path.getmtime('c:/test.txt'))- > '2019-01-08T00:09:17.682425+00:00'
 def mtime2IsoStr(mtime):
-    date = datetime.datetime.fromtimestamp(mtime)
-    return date.replace(tzinfo=datetime.timezone.utc).isoformat()
+    date = datetime.datetime.fromtimestamp(mtime, datetime.timezone.utc)
+    return date.isoformat()
 
 
-def utcTime2Str(utcTime: datetime) -> str:
-    """
-    Convert utc time to string (UtcTime->'2019-01-08T00:09:17')
-    :param utcTime:
-    :return: string
-    """
+def utcTime2Str(utcTime: datetime.datetime) -> str:
     return utcTime.strftime("%Y-%m-%d %H:%M:%S")
 
 
 def try_str_2_struct_time(str_date: str, time_format: str) -> time.struct_time:
-    """
-        Search date format and convert it (struct_time is JSON serializable)
-        :param str_date:
-        :param time_format: expected date format
-        :return: datetime or None if date is not recognised
-        """
-
     try:
         return time.strptime(str_date, time_format)
-    except ValueError as e:
-        if time_format == '%Y-%m-%d':
-            return try_str_2_struct_time(str_date, '%m-%d-%Y')
-        if time_format == '%m-%d-%Y':
-            return try_str_2_struct_time(str_date, '%Y-%m')
-        if time_format == '%Y-%m':
-            return try_str_2_struct_time(str_date, '%B, %Y')
-        if time_format == '%B, %Y':
-            return try_str_2_struct_time(str_date, '%Y')
-        if time_format == '%Y':
-            return try_str_2_struct_time(str_date, '%B %d, %Y')
-        if time_format == '%B %d, %Y':
-            return try_str_2_struct_time(str_date, '%b %d %Y %I:%M %p')
-        if time_format == '%b %d %Y %I:%M %p':
-            return try_str_2_struct_time(str_date, '%Y-%m-%dT%H:%M:%SZ')  # '2021-04-03T23:01:06Z'
-        return None  # date format unknown
-    except OverflowError as e:
-        print("Overflow %s/%s" % (str_date, time_format))
+    except ValueError:
+        fallbacks = {
+            '%Y-%m-%d': '%m-%d-%Y',
+            '%m-%d-%Y': '%Y-%m',
+            '%Y-%m': '%B, %Y',
+            '%B, %Y': '%Y',
+            '%Y': '%B %d, %Y',
+            '%B %d, %Y': '%b %d %Y %I:%M %p',
+            '%b %d %Y %I:%M %p': '%Y-%m-%dT%H:%M:%SZ'
+        }
+        next_format = fallbacks.get(time_format)
+        if next_format:
+            return try_str_2_struct_time(str_date, next_format)
+        return None
+    except OverflowError:
+        print(f"Overflow {str_date}/{time_format}")
         return None
 
 
 def str_2_struct_time(str_date: str) -> time.struct_time:
-    """
-    Search date format and convert it (struct_time is JSON serializable)
-    :param str_date:
-    :return: datetime or None if date is not recognised
-    """
     return try_str_2_struct_time(str_date, '%Y-%m-%d')
 
 
-def struct_time_2_datetime(date: time.struct_time) -> datetime:
-    """
-    convert struct_time into datetime (not JSON serializable)
-    :param date:
-    :return:
-    """
+def struct_time_2_datetime(date: time.struct_time) -> datetime.datetime:
     if date is None:
         return None
     if date.tm_year <= 1970:
-        return datetime(date.tm_year, date.tm_mon, date.tm_mday)
-    return datetime.fromtimestamp(mktime(date))
+        return datetime.datetime(date.tm_year, date.tm_mon, date.tm_mday, tzinfo=datetime.timezone.utc)
+    return datetime.datetime.fromtimestamp(time.mktime(date), datetime.timezone.utc)
 
 
 def extract_text(title: str, txt: str) -> str:
-    """
-    extract value from \n<TITLE>\n\t\t\t\t\t<VALUE>\n\t\t\t\t string
-    :param title:<TITLE>
-    :param txt:the whole string
-    :return: <VALUE>
-    """
     pos = txt.find(title, 0) + len(title)
-    return txt[pos:].strip('\n\t')
+    return txt[pos:].strip('\n\t ')
 
 
 def searchSentenceInString(string, sentence):
+    if not sentence:
+        return 0.0
     score = 0.0
     words = sentence.split(' ')
     for word in words:
@@ -238,46 +212,22 @@ def searchSentenceInString(string, sentence):
 
 
 def unsuffix(path):
-    path = Path(path).stem
-    while path != Path(path).stem:
-        path = Path(path).stem
-    return path
+    path_obj = Path(path)
+    return path_obj.name.split('.')[0]
 
 
 def is_suffix(filename: str, suffix: str) -> bool:
-    """Test if filename contains a suffix"""
     return suffix in Path(filename).suffixes
 
 
 def iterative_levenshtein(s, t, costs=(1, 1, 1)):
-    """
-        thanks to https://www.python-course.eu/levenshtein_distance.php
-        iterative_levenshtein(s, t) -> ldist
-        ldist is the Levenshtein distance between the strings
-        s and t.
-        For all i and j, dist[i,j] will contain the Levenshtein
-        distance between the first i characters of s and the
-        first j characters of t
-
-        costs: a tuple or a list with three integers (d, i, s)
-               where d defines the costs for a deletion
-                     i defines the costs for an insertion and
-                     s defines the costs for a substitution
-    """
-
     rows = len(s) + 1
     cols = len(t) + 1
     deletes, inserts, substitutes = costs
+    dist = [[0 for _ in range(cols)] for _ in range(rows)]
 
-    dist = [[0 for x in range(cols)] for x in range(rows)]
-
-    # source prefixes can be transformed into empty strings
-    # by deletions:
     for row in range(1, rows):
         dist[row][0] = row * deletes
-
-    # target prefixes can be created from an empty source string
-    # by inserting the characters
     for col in range(1, cols):
         dist[0][col] = col * inserts
 
@@ -289,83 +239,56 @@ def iterative_levenshtein(s, t, costs=(1, 1, 1)):
                 cost = substitutes
             dist[row][col] = min(dist[row - 1][col] + deletes,
                                  dist[row][col - 1] + inserts,
-                                 dist[row - 1][col - 1] + cost)  # substitution
-
-    return dist[row][col]
+                                 dist[row - 1][col - 1] + cost)
+    return dist[rows - 1][cols - 1]
 
 
 def save_data(filepath: str, data: object) -> None:
-    """
-    save python data into json in current dir
-    :param filepath:
-    :return: None
-    """
     try:
-        with open(filepath, 'w') as outfile:
+        with open(filepath, 'w', encoding='utf-8') as outfile:
             json.dump(data, outfile, indent=4, separators=(',', ': '), default=str)
     except IOError as e:
-        raise Exception("Database write error %s" % str(e))
+        raise Exception(f"Database write error {e}")
 
 
 def load_data(filepath: str) -> object:
-    """
-        load python json from current dir
-        :param filepath: filename + path
-        :return: loaded data
-    """
-    data = None
     try:
-        with open(filepath, 'r') as file:
-            data = json.load(file)
+        with open(filepath, 'r', encoding='utf-8') as file:
+            return json.load(file)
     except IOError as e:
-        raise Exception("Database read error %s" % str(e))
-    return data
+        raise Exception(f"Database read error {e}")
 
 
 def safe_save_json(filepath: str, data: object) -> None:
-    """
-    Prevent file corrupion if save is interrupt by someone.. (close app/reboot/etc.)
-    hyp: .back file is allways the good file
-    :param filepath:
-    :param data:
-    :return:
-    """
-    if not os.path.exists(filepath + '.back'):  # no backup file, create it
-        os.rename(filepath, filepath + '.back')  # backup file to file.back (rename)
-    save_data(filepath, data)  # save a new file
-    os.remove(filepath + '.back')  # all is good, remove .back file
+    # Fixed: Prevent FileNotFoundError if running for the first time
+    if os.path.exists(filepath):
+        if os.path.exists(filepath + '.back'):
+            os.remove(filepath + '.back')
+        os.rename(filepath, filepath + '.back')
+    
+    save_data(filepath, data)
+    
+    if os.path.exists(filepath + '.back'):
+        os.remove(filepath + '.back')
 
 
 def safe_load_json(filepath: str) -> object:
-    """
-
-    :param filepath:
-    :return:
-    """
-    data = None
-    if not os.path.exists(filepath + '.back'):  # no backup file, create it
-        data = load_data(filepath)
+    if not os.path.exists(filepath + '.back'):
+        return load_data(filepath)
     else:
-        data = load_data(filepath + '.back')  # if .back exists => we don't know if last save is done...
+        data = load_data(filepath + '.back')
         if os.path.exists(filepath):
             os.remove(filepath)
         os.rename(filepath + '.back', filepath)
-    return data
+        return data
 
 
 def justify_text(text: str, tab: int = 0, max_col: int = 30) -> list:
-    """
-    Justify a text
-    :param text: text to justify
-    :param tab:
-    :param max_col:
-    :return:
-    """
-
     result = []
     size = len(text)
     nb_col = max_col - tab
-
+    if nb_col <= 0:
+        return [text]
     nb_line = int(size / nb_col)
     for line in range(0, nb_line):
         result.append(text[line * nb_col:(line * nb_col) + nb_col])

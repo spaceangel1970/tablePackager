@@ -1,6 +1,6 @@
 # Table Packager Release Notes
 
-## What's New in Version 1.1.5
+## What's New in Version 1.2
 
 /!\ You must uninstall current version before install a new one /!\
 ### What's New

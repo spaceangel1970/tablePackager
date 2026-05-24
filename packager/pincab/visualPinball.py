@@ -44,6 +44,14 @@ class VisualPinball:
         if not os.path.exists(self.visual_pinball_path):
             raise ValueError('Visual Pinball not found(%s)' % self.visual_pinball_path)
 
+        # --- DYNAMIC STRUCTURAL ADAPTER INJECTION ---
+        if hasattr(package, 'manifest') and hasattr(package.manifest, 'content'):
+            if "visual pinball" in package.manifest.content:
+                # Force Music to be a list if it's missing or currently a dict
+                if "Music" not in package.manifest.content["visual pinball"] or \
+                   not isinstance(package.manifest.content["visual pinball"]["Music"], list):
+                    package.manifest.content["visual pinball"]["Music"] = []
+
         self.logger.info("* Visual Pinball X files")
         vpx_file = Path(self.visual_pinball_path + '/tables/' + package.name + '.vpx')
         ini_file = Path(self.visual_pinball_path + '/tables/' + package.name + '.ini')
@@ -95,23 +103,74 @@ class VisualPinball:
         music_base_dir = os.path.join(self.visual_pinball_path, "Music")
         
         if found_music_tracks:
-            self.logger.info(f"+ Found {len(found_music_tracks)} track references inside table script.")
+            # Re-verify the list type before looping
+            vp_data = package.manifest.content['visual pinball']
+            if not isinstance(vp_data.get('Music'), list):
+                vp_data['Music'] = []
+            
+            self.logger.info(f"+ Found {len(found_music_tracks)} track references...")
+            
+            from datetime import datetime, timezone
+            now = datetime.now(timezone.utc)
+            clean_iso_timestamp = f"{now.year:04d}-{now.month:02d}-{now.day:02d}T{now.hour:02d}:{now.minute:02d}:{now.second:02d}.{now.microsecond:06d}+0000"
             
             packed_count = 0
+            vp_data = package.manifest.content['visual pinball']
+            
             for track_path in found_music_tracks:
-                # Resolve absolute path on disk safely
+                safe_track_path = track_path.replace('\\', '/')
                 full_music_path = Path(os.path.normpath(os.path.join(music_base_dir, track_path)))
                 
                 if full_music_path.exists() and full_music_path.is_file():
-                    # Preserve relative subfolder structure inside Music/ if any
-                    relative_dest = os.path.dirname(track_path)
-                    target_archive_dir = f"visual pinball/Music/{relative_dest}" if relative_dest else "visual pinball/Music"
-                    
                     self.logger.info(f"  -> BUNDLING: '{track_path}'")
-                    package.add_file(full_music_path, target_archive_dir)
+                    
+                    relative_dest_dir = os.path.dirname(safe_track_path)
+                    file_size = full_music_path.stat().st_size
+                    
+                    # TRACK FOLDERS TO AVOID DUPLICATE UI NODES
+            added_folders = set()
+            
+            for track_path in found_music_tracks:
+                safe_track_path = track_path.replace('\\', '/')
+                full_music_path = Path(os.path.normpath(os.path.join(music_base_dir, track_path)))
+                
+                if full_music_path.exists() and full_music_path.is_file():
+                    # 1. HANDLE FOLDER METADATA (So the UI knows it's a folder)
+                    folder_name = os.path.dirname(safe_track_path)
+                    if folder_name and folder_name not in added_folders:
+                        vp_data['Music'].append({
+                            'folder': {
+                                'path': f"visual pinball/Music/{folder_name}",
+                                'name': folder_name
+                            }
+                        })
+                        added_folders.add(folder_name)
+
+                    # 2. HANDLE FILE METADATA
+                    archive_dest_path = f"visual pinball/Music/{safe_track_path}"
+                    
+                    vp_data['Music'].append({
+                        'file': {
+                            'name': full_music_path.name,
+                            'path': archive_dest_path, 
+                            'size': full_music_path.stat().st_size,
+                            'lastmod': clean_iso_timestamp,
+                            'author(s)': '', 'version': '', 'url': '', 'md5': ''
+                        }
+                    })
+
+                    # 3. FIX THE PHYSICAL EXTRACTION PATH
+                    physical_dest = os.path.join(self.baseModel.tmp_path, package.name, "visual pinball", "Music", safe_track_path)
+                    os.makedirs(os.path.dirname(physical_dest), exist_ok=True)
+                    
+                    try:
+                        shutil.copy2(str(full_music_path), physical_dest)
+                        packed_count += 1
+                    except Exception as e:
+                        self.logger.error(f"Failed to copy '{full_music_path}' to '{physical_dest}': {e}")
+                                    
                     packed_count += 1
                 else:
-                    # Highlight missing files as a warning in the UI log
                     self.logger.warning(f"  ! MISSING ON DISK: '{track_path}' (Expected in: {music_base_dir})")
             
             self.logger.info(f"* Successfully archived {packed_count} of {len(found_music_tracks)} music tracks.")
@@ -203,7 +262,6 @@ class VisualPinball:
         return active_roms
 
     def extract_music_assets(self, vpt_file: Path) -> list:
-        """Reads the raw table binary file and extracts all active .mp3 and .ogg paths inside quotation marks."""
         discovered_tracks = []
         if not vpt_file.exists():
             return discovered_tracks
@@ -213,19 +271,12 @@ class VisualPinball:
                 content = f.read()
             text_content = content.decode('utf-8', errors='ignore')
             
-            # This regex filters active lines (skipping lines starting with a comment quote)
-            # and extracts text matching something inside quotes that terminates with .mp3 or .ogg
             music_pattern = r"^[ \t]*(?!')[^'\r\n]*[\"']([^\"'\r\n]+\.(?:mp3|ogg))[\"']"
             
             for match in re.finditer(music_pattern, text_content, re.IGNORECASE | re.MULTILINE):
                 track_path = match.group(1).strip()
-                
-                # Normalize slashes for safe Windows parsing
                 track_path = track_path.replace('\\', '/')
-                
-                # CRITICAL FIX: Strip any leading slashes so os.path.join doesn't break root path merging
                 track_path = track_path.lstrip('/')
-                
                 if track_path and track_path not in discovered_tracks:
                     discovered_tracks.append(track_path)
                     
