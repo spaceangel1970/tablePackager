@@ -28,7 +28,7 @@ class PackageEditorViewer(Frame, Observer):
         self.__packageEditorModel = baseModel.packageEditorModel
         self.__root = window
         self.__backupState = {'btAddFile': 'disable', 'btDelFile': 'disable', 'btRename': 'disable', 'btSave': 'normal',
-                              'btCancel': 'normal', 'btScanPup': 'normal'}
+                              'btCancel': 'normal'}
         self.__btAddFileImage = PhotoImage(file=baseModel.base_dir + "images/btAddFile.png")
         self.__btDelFileImage = PhotoImage(file=baseModel.base_dir + "images/btDelFile.png")
         self.__btRenameFileImage = PhotoImage(file=baseModel.base_dir + "images/btRenameFile.png")
@@ -216,27 +216,23 @@ class PackageEditorViewer(Frame, Observer):
         self.__btRenameFileTip = CreateToolTip(self.__btRenameFile, 'Rename a file into package')
         self.__btRenameFile.grid(row=3, column=2, sticky=N)
 
-        self.__btScanPup = Button(self.__contentFrame, text='Scan PuP', command=self.on_scan_pup, state='disabled')
-        self.__btScanPupTip = CreateToolTip(self.__btScanPup, 'Scan the PuP lookup database and add matching PuP archives')
-        self.__btScanPup.grid(row=4, column=2, sticky=N, pady=(10, 0))
-
         self.__btUpFile = Button(self.__contentFrame, image=self.__btUpFileImage, command=self.on_up_file,
                                  state='disable')
-        self.__btUpFile.grid(row=5, column=2, sticky=N)
+        self.__btUpFile.grid(row=4, column=2, sticky=N)
         self.__btDownFile = Button(self.__contentFrame, image=self.__btDownFileImage, command=self.on_down_file,
                                    state='disable')
-        self.__btDownFile.grid(row=6, column=2, sticky=N)
+        self.__btDownFile.grid(row=5, column=2, sticky=N)
 
         self.__btRotateRight = Button(self.__contentFrame, image=self.__btRotateRightImage,
                                       command=self.on_rotate_right_image,
                                       state='disable')
         self.__btRotateRightTip = CreateToolTip(self.__btAddFile, 'Turn Right image')
-        self.__btRotateRight.grid(row=6, column=2, sticky=N)
+        self.__btRotateRight.grid(row=5, column=2, sticky=N)
         self.__btRotateLeft = Button(self.__contentFrame, image=self.__btRotateLeftImage,
                                      command=self.on_rotate_left_image,
                                      state='disable')
         self.__btRotateLeftTip = CreateToolTip(self.__btAddFile, 'Turn Left image')
-        self.__btRotateLeft.grid(row=7, column=2, sticky=N)
+        self.__btRotateLeft.grid(row=6, column=2, sticky=N)
 
         # =====================================================================
         self.__infoFrame.grid(row=0, column=0, sticky=E + W)
@@ -315,9 +311,6 @@ class PackageEditorViewer(Frame, Observer):
 
     def on_select(self, evt):
         item = self.__tree.item(self.__tree.focus())
-        
-        # Default fallback: keep things safe unless criteria match
-        self.__btScanPup['state'] = 'disabled'
 
         if 'info' in item['tags']:
             if self.__btProtectedState.get() == 'False':
@@ -332,8 +325,6 @@ class PackageEditorViewer(Frame, Observer):
             if 'file' in item['tags'] or 'category' in item['tags']:
                 if self.__btProtectedState.get() == 'False':
                     self.__btAddFile['state'] = 'normal'
-                    # --- FIX: Turn the PuP Pack button on if protection is off! ---
-                    self.__btScanPup['state'] = 'normal'
                     
             if 'file' in item['tags']:
                 if self.__btProtectedState.get() == 'False':
@@ -364,13 +355,10 @@ class PackageEditorViewer(Frame, Observer):
             self.__btRenameFile['state'] = 'disable'
             self.__btUpFile['state'] = 'disable'
             self.__btDownFile['state'] = 'disable'
-            # --- FIX: Ensure protection locks down the PuP scanner out too ---
-            self.__btScanPup['state'] = 'disabled'
             self.__tree.unbind('<Double-1>')
             self.__packageNameEntry.unbind('<KeyRelease>')
         else:
             self.__btSave['state'] = 'normal'
-            self.__btScanPup['state'] = 'normal' # --- FIX: Re-enable when unprotected
             self.__tree.bind('<Double-1>', self.on_double_click)
             self.__packageNameEntry.bind('<KeyRelease>', self.table_name_key_event)
 
@@ -427,16 +415,6 @@ class PackageEditorViewer(Frame, Observer):
         if src_file != '':
             self.__last_dir = src_file
             self.__packageEditorModel.add_file(self.__topLevel, item['tags'][-1], src_file, required_name)
-
-    def on_scan_pup(self):
-        try:
-            added = self.__packageEditorModel.scan_pup_for_table()
-            if added:
-                messagebox.showinfo('PuP Scan', 'Added %d PuP file(s) to package.' % len(added), parent=self.__topLevel)
-            else:
-                messagebox.showinfo('PuP Scan', 'No PuP packs were found for this table.', parent=self.__topLevel)
-        except Exception as e:
-            tkinter.messagebox.showerror('Scan PuP Error', str(e), parent=self.__topLevel)
 
     def on_del_file(self):
         item = self.__tree.item(self.__tree.focus())
@@ -564,8 +542,6 @@ class PackageEditorViewer(Frame, Observer):
                     self.__btDelFile['state'] = 'disabled'
                     self.__backupState['btRenameFile'] = self.__btRenameFile['state']
                     self.__btRenameFile['state'] = 'disabled'
-                    self.__backupState['btScanPup'] = self.__btScanPup['state']
-                    self.__btScanPup['state'] = 'disabled'
                     self.__backupState['btSave'] = self.__btSave['state']
                     self.__btSave['state'] = 'disabled'
                     self.__backupState['btCancel'] = self.__btCancel['state']
@@ -587,7 +563,6 @@ class PackageEditorViewer(Frame, Observer):
                     self.__btSave['state'] = self.__backupState['btSave']
                     self.__btCancel['state'] = self.__backupState['btCancel']
                     self.__btRenameFile['state'] = self.__backupState['btRenameFile']
-                    self.__btScanPup['state'] = self.__backupState['btScanPup']
                     self.__btUpFile['state'] = self.__backupState['btUpFile']
                     self.__btDownFile['state'] = self.__backupState['btDownFile']
                     self.__tree.bind('<ButtonRelease-1>', self.on_select)
