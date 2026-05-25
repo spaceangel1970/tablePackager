@@ -527,15 +527,21 @@ class PackageEditorViewer(Frame, Observer):
                         category_folder = self.__tree.insert(product_node, "end",
                                                              tag=['category', product + '/' + category], text=category,
                                                              values=('', '', ''), open=True)
+                        # Prevent duplicate display rows for the same filename
+                        seen_files = set()
                         for element in content[product][category]:
                             if element.get('file') is not None:
                                 file = element['file']
-                                last_mod = file['lastmod']
+                                # Skip duplicates (same filename) which can appear in merged manifests
+                                if file['name'] in seen_files:
+                                    continue
+                                seen_files.add(file['name'])
+                                last_mod = file.get('lastmod')
                                 node_id = self.__tree.insert(category_folder, "end", text=file['name'],
                                                              tag=['file', product + '/' + category],
-                                                             values=(convert_size(file['size']),
-                                                                     utcTime2Str(strIsoUTCTime2DateTime(last_mod)),
-                                                                     file['author(s)'], file['version'], file['url']))
+                                                             values=(convert_size(file.get('size', 0)),
+                                                                     utcTime2Str(strIsoUTCTime2DateTime(last_mod)) if last_mod else '',
+                                                                     file.get('author(s)', ''), file.get('version', ''), file.get('url', '')))
                                 if selection_set is not None:
                                     data_path = product + '/' + category
                                     if data_path == selection_set[0] and file['name'] == selection_set[1]:

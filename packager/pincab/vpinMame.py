@@ -1,6 +1,8 @@
 import os
+import copy
 import shutil
 from pathlib import Path
+import tempfile
 import xml.etree.ElementTree as ET
 from packager.tools.toolbox import *
 from packager.model.package import Package
@@ -174,48 +176,56 @@ class VPinMame:
             b2s_xml_path = os.path.join(self.visual_pinball_path, 'tables', 'B2STableSettings.xml')
             if os.path.exists(b2s_xml_path):
                 try:
-                    with open(b2s_xml_path, 'r', encoding='utf-8', errors='ignore') as f:
-                        xml_lines = f.readlines()
-                    
-                    captured_b2s_lines = []
-                    inside_b2s_block = False
-                    start_tag = f"<{rom.lower()}>"
-                    end_tag = f"</{rom.lower()}>"
-                    
-                    for line in xml_lines:
-                        clean_line = line.strip().lower()
-                        
-                        if start_tag in clean_line:
-                            inside_b2s_block = True
-                        
-                        if inside_b2s_block:
+                    tree = ET.parse(b2s_xml_path)
+                    root = tree.getroot()
+                    snippet_root = ET.Element('B2STableSettings')
+                    captured = False
+
+                    lookup_names = {rom.lower().strip()}
+                    if primary_table_rom.lower().strip() != rom.lower().strip():
+                        lookup_names.add(primary_table_rom.lower().strip())
+
+                    available_tags = [child.tag for child in root]
+
+                    # Exact match first, then softer alias matching if needed
+                    for child in root:
+                        child_tag = child.tag.strip().lower()
+                        if child_tag in lookup_names:
+                            snippet_child = copy.deepcopy(child)
                             if rom.lower() != primary_table_rom.lower():
-                                modified_line = line.replace(f"<{rom}>", f"<{primary_table_rom}>")
-                                modified_line = modified_line.replace(f"</{rom}>", f"</{primary_table_rom}>")
-                                modified_line = modified_line.replace(f"<{rom.lower()}>", f"<{primary_table_rom.lower()}>")
-                                modified_line = modified_line.replace(f"</{rom.lower()}>", f"</{primary_table_rom.lower()}>")
-                                captured_b2s_lines.append(modified_line)
-                            else:
-                                captured_b2s_lines.append(line)
-                            
-                        if end_tag in clean_line:
-                            inside_b2s_block = False
-                            break
-                    
-                    if captured_b2s_lines:
+                                snippet_child.tag = primary_table_rom
+                            snippet_root.append(snippet_child)
+                            self.logger.info(f"++ Found exact B2S profile for [{child.tag}] using lookup names {lookup_names}")
+                            captured = True
+
+                    if not captured:
+                        for child in root:
+                            child_tag = child.tag.strip().lower()
+                            if any(name in child_tag or child_tag in name for name in lookup_names):
+                                snippet_child = copy.deepcopy(child)
+                                if rom.lower() != primary_table_rom.lower():
+                                    snippet_child.tag = primary_table_rom
+                                snippet_root.append(snippet_child)
+                                self.logger.info(f"++ Found partial B2S profile match [{child.tag}] using lookup names {lookup_names}")
+                                captured = True
+                                break
+
+                    if captured:
                         self.logger.info(f"++ Slicing out custom B2S XML profile settings for [{rom}] mapped to [{primary_table_rom}]")
-                        dest_b2s_dir = os.path.join(package.directory, package.name, 'visual pinball', 'tables')
-                        os.makedirs(dest_b2s_dir, exist_ok=True)
-                        dest_b2s_file = os.path.normpath(os.path.join(dest_b2s_dir, 'B2STableSettings.xml'))
-                        
-                        with open(dest_b2s_file, 'w', encoding='utf-8') as f_out:
-                            f_out.write("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n")
-                            f_out.write("<B2STableSettings>\n")
-                            f_out.writelines(captured_b2s_lines)
-                            f_out.write("</B2STableSettings>\n")
-                        
-                        self.logger.info(f"++ Cleanly wrote structured B2S configuration block to staging folder.")
-                        
+                        tmp_file = None
+                        try:
+                            tmp_handle = tempfile.NamedTemporaryFile(delete=False, suffix='.xml')
+                            tmp_file = tmp_handle.name
+                            tmp_handle.close()
+                            ET.ElementTree(snippet_root).write(tmp_file, encoding='utf-8', xml_declaration=True)
+                            package.add_file(tmp_file, 'visual pinball/tables', dst_file='B2STableSettings.xml')
+                            self.logger.info(f"++ Cleanly wrote structured B2S configuration block to staging folder.")
+                        finally:
+                            if tmp_file and os.path.exists(tmp_file):
+                                os.remove(tmp_file)
+                    else:
+                        self.logger.info(f"++ No B2S XML profile found for [{rom}] in global B2STableSettings.xml using lookup names {lookup_names}")
+                        self.logger.info(f"++ Available global B2S tags: {available_tags}")
                 except Exception as e:
                     self.logger.error(f"[B2S XML LOG] Error handling custom XML block profile extraction: {str(e)}")
 
