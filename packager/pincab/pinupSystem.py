@@ -78,15 +78,26 @@ class PinUpSystem:
                         
                     target_pup_folder = os.path.join(pup_videos_base, rom)
                     if os.path.exists(target_pup_folder) and os.path.isdir(target_pup_folder):
+                        # Skip if the folder contains no actual media files
+                        has_files = False
+                        for _root, _dirs, files in os.walk(target_pup_folder):
+                            if files:
+                                has_files = True
+                                break
+
+                        if not has_files:
+                            self.logger.info(f"-- Skipping local PuP folder for ROM '{rom}' (empty)")
+                            continue
+
                         self.logger.info(f"++ Found active local PuP folder matching ROM: '{rom}'")
-                        
+
                         destination_pup_dir = os.path.join(package.directory, package.name, 'media', 'PuP', rom)
-                        
+
                         self.logger.info(f"+ Copying raw PuP folder contents quietly -> 'media/PuP/{rom}/'")
-                        
+
                         if os.path.exists(destination_pup_dir):
                             shutil.rmtree(destination_pup_dir)
-                        
+
                         shutil.copytree(target_pup_folder, destination_pup_dir)
                         self.logger.info(f"++ Raw PuP pack files mirrored safely to package staging workspace.")
                         

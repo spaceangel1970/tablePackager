@@ -58,6 +58,30 @@ class PupScanner:
         name = re.sub(r'[^A-Za-z0-9_\-\.]+', '', name)
         return name[:120]
 
+    def _package_has_files(self, package: Package) -> bool:
+        """Return True if the package manifest contains any staged files."""
+        try:
+            content = package.manifest.content
+        except Exception:
+            return False
+
+        def scan(node):
+            if isinstance(node, dict):
+                for k, v in node.items():
+                    if k == 'file':
+                        return True
+                    if scan(v):
+                        return True
+            elif isinstance(node, list):
+                for item in node:
+                    if isinstance(item, dict) and 'file' in item:
+                        return True
+                    if scan(item):
+                        return True
+            return False
+
+        return scan(content)
+
     def scan_and_bundle(self) -> list:
         """Scan puplookup for Pup packs and create packages containing PinUp media.
 
@@ -83,6 +107,11 @@ class PupScanner:
 
                 # extract PinUp media using the actual base table name so files are found correctly
                 self.baseModel.pinupSystem.extract(package, 'visual pinball', search_name=search_name)
+
+                # If extraction produced no files, skip creating the pup package
+                if not self._package_has_files(package):
+                    self.logger.info(f"Skipping empty PuP package for '{game}' ({package_name}) — no files staged")
+                    continue
 
                 package.save()
                 package.pack()
@@ -191,6 +220,11 @@ class PupScanner:
             package = Package(self.baseModel, package_name)
             package.new(self.baseModel.tmp_path)
             self.baseModel.pinupSystem.extract(package, 'visual pinball', search_name=search_name)
+            # If extraction produced no files, return empty — nothing to archive
+            if not self._package_has_files(package):
+                self.logger.info(f"create_pup_archive: no files staged for '{game_name}', skipping archive")
+                return ''
+
             package.save()
             package.pack()
             src = os.path.join(self.baseModel.tmp_path, package_name + self.baseModel.package_extension)
