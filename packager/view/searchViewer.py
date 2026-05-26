@@ -137,7 +137,7 @@ class SearchViewer(Frame, Observer):
         self.__scrolled_text.insert(INSERT, 'Theme........: %s\n' % pinball_machine['Theme'])
         self.__scrolled_text.insert(INSERT, 'Manufacturer.: %s\n' % pinball_machine['Manufacturer'])
         self.__scrolled_text.insert(INSERT, 'Year.........: %s\n' % pinball_machine['Year'])
-        self.justify_text('Description..:', pinball_machine['Description(s)'])
+        self.justify_text('Description..:', pinball_machine.get('Description(s)', 'N/A'))
         self.__scrolled_text.insert(INSERT, 'Ipdb.........: ')
 
         if pinball_machine['IPDB Number'] >= 0:

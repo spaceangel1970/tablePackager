@@ -11,6 +11,7 @@ from packager.pincab.site_cab import *
 from packager.pincab.manufacturer import Manufacturer
 from packager.pincab.statistics import Statistics
 from packager.tools.exception import *
+import requests # Ensure this is at the top of your file
 
 class TableDatabase:
     def __init__(self, logger, baseModel) -> None:
@@ -52,6 +53,15 @@ class TableDatabase:
     def save(self, database: dict = None) -> None:
         pass
 
+    def _safe_int(self, value):
+        """Safely converts value to int, returning 0 if conversion fails."""
+        try:
+            # If it's a string like "123", this works.
+            # If it's a URL or empty, it will trigger the except block.
+            return int(value)
+        except (ValueError, TypeError):
+            return 0
+
     def load(self) -> None:
         """
         Load VPS puplookup.csv database directly using exact PinUp Popper headers
@@ -76,16 +86,24 @@ class TableDatabase:
                         # Strip out the trailing .vpx extension if it's baked into the CSV filename field
                         filename_clean = os.path.splitext(filename)[0]
                         
-                        self.__data[filename_clean] = {
-                            'Name': row.get('GameName', filename_clean),
-                            'Table Name': row.get('GameName', filename_clean),
-                            'Manufacturer': row.get('Manufact', 'Unknown'),
-                            'Year': row.get('GameYear', 'Unknown'),
-                            'Date Manufactured': row.get('GameYear', 'Unknown'),
-                            'Theme': row.get('GameTheme', ''),
-                            'IPDB Number': row.get('IPDBNum', -1),
-                            'Urls': []
-                        }
+                        # In packager/tableDatabase.py, inside your load() method:
+                        # In your tableDatabase.py load() method, ensure the dictionary includes these:
+                    self.__data[filename_clean] = {
+                        'Table Name': row.get('GameName', filename_clean),
+                        'Theme': row.get('GameTheme', 'Unknown'),
+                        'Manufacturer': row.get('Manufact', 'Unknown'),
+                        'Year': row.get('GameYear', 'Unknown'),
+                        'Description(s)': row.get('GameTheme', 'No description available'),
+                        'IPDB Number': self._safe_int(row.get('IPDBNum', 0)),
+                        'Player(s)': row.get('NumPlayers', 'Unknown'),
+                        'Type': row.get('GameType', 'Unknown'),
+                        'Fun Rating': 'N/A',            # Field not in your new CSV
+                        'Notes': 'N/A',                 # Field not in your new CSV
+                        'Design by': row.get('DesignedBy', 'Unknown'),
+                        'Art by': row.get('Author', 'Unknown'),
+                        'Urls': []                      # Ensure this is a list
+        }
+                        
             self.logger.info(f"Successfully loaded {len(self.__data)} table indices from CSV configuration.")
         except Exception as e:
             self.logger.error(f"Failed to read puplookup.csv: {e}")
@@ -111,6 +129,32 @@ class TableDatabase:
             if key.upper() == clean_name.upper():
                 return value
         return None
+    
+    def update_all_pincab_file_from_list(self) -> None:
+        """
+        Downloads the latest puplookup.csv from VPS and refreshes local data.
+        """
+        url = "https://virtualpinballspreadsheet.github.io/vps-db/db/puplookup.csv"
+        self.logger.info(f"Updating database from: {url}")
+        
+        try:
+            # 1. Download the file silently
+            response = requests.get(url, timeout=15)
+            response.raise_for_status() # Check for HTTP errors
+            
+            # 2. Silently overwrite the local file
+            with open(self.__dbPath, 'wb') as f:
+                f.write(response.content)
+            
+            self.logger.info("Database file successfully updated.")
+            
+            # 3. Trigger the internal reload
+            self.load()
+            
+        except Exception as e:
+            self.logger.error(f"Failed to update database: {e}")
+            # Optional: Fallback to existing data if download fails
+            self.load()
 
     def search_url(self, url: str) -> dict:
         return None
