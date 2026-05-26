@@ -14,6 +14,7 @@ from packager.pincab.vpinMame import VPinMame
 from packager.pincab.pinballX import PinballX
 from packager.pincab.pinupSystem import PinUpSystem
 from packager.pincab.ultraDMD import UltraDMD
+from packager.pincab.FlexDMD import FlexDMD
 from packager.pincab.tableDatabase import TableDatabase
 from packager.model.packageEditorModel import PackageEditorModel
 from packager.model.packagedTablesModel import *
@@ -44,6 +45,7 @@ class BaseModel:
         self.__vpinMame = VPinMame(self.logger, self)
         self.__pinballX = PinballX(self.logger, self)
         self.__ultraDMD = UltraDMD(self.logger, self)
+        self.__flexDMD = FlexDMD(self.logger, self)
         self.__database = TableDatabase(self.logger, self)
         self.__pupScanner = PupScanner(self.logger, self)
 
@@ -142,6 +144,10 @@ class BaseModel:
     @property
     def ultraDMD(self):
         return self.__ultraDMD
+
+    @property
+    def flexDMD(self):
+        return self.__flexDMD
 
     @property
     def database(self):

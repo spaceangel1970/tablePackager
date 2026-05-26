@@ -75,6 +75,7 @@ class PackagedTablesModel(Observable):
                     self.baseModel.visualPinball.deploy(package)
                     self.baseModel.vpinMame.deploy(package)
                     self.baseModel.ultraDMD.deploy(package)
+                    self.baseModel.flexDMD.deploy(package)
                 if context['pinballX'].get():
                     self.baseModel.pinballX.deploy(package)
 

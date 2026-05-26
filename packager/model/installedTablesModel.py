@@ -104,6 +104,7 @@ class InstalledTablesModel(Observable):
                     self.baseModel.visualPinball.extract(package)
                     self.baseModel.vpinMame.extract(package)
                     self.baseModel.ultraDMD.extract(table['name'], package)
+                    self.baseModel.flexDMD.extract(table['name'], package)
                     if context['pinupSystem'].get():
                         self.baseModel.pinupSystem.extract(package, 'visual pinball')
                 if context['pinballX'].get():
@@ -157,6 +158,7 @@ class InstalledTablesModel(Observable):
             self.logger.info("--[Working on '%s']------------------" % (table['name']))
 
             ultraDMD = ''
+            flexDMD = ''
             rom_list = []
             isPackage = False
             manifest = Manifest(table['name'], self.baseModel.package_version)
@@ -167,6 +169,8 @@ class InstalledTablesModel(Observable):
                     rom_list = manifest.get_field('visual pinball/info/romName')
                 if manifest.exists_field('visual pinball/info/ultraDMD'):
                     ultraDMD = manifest.get_field('visual pinball/info/ultraDMD')
+                if manifest.exists_field('visual pinball/info/flexDMD'):
+                    flexDMD = manifest.get_field('visual pinball/info/flexDMD')
             except:
                 rom_list = self.baseModel.visualPinball.get_rom_name(table['name'])  # use package.manifest if exists
 
@@ -176,8 +180,11 @@ class InstalledTablesModel(Observable):
             if isPackage:
                 if ultraDMD != '':
                     self.baseModel.ultraDMD.delete(table['name'], dir_name=ultraDMD)  # use package.manifest if exists
+                if flexDMD != '':
+                    self.baseModel.flexDMD.delete(table['name'], dir_name=flexDMD)  # use package.manifest if exists
             else:
                 self.baseModel.ultraDMD.delete(table['name'])  # use package.manifest if exists
+                self.baseModel.flexDMD.delete(table['name'])  # use package.manifest if exists
             self.baseModel.pinballX.delete(table['name'])
             self.baseModel.pinupSystem.delete(table['name'], 'visual pinball')
             self.logger.warning("delete on futurPinball is not yet implemented")

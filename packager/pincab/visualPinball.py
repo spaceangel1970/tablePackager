@@ -43,7 +43,15 @@ class VisualPinball:
             raise ValueError('table not found (%s) (vpt or vpx)' % self.visual_pinball_path + '/tables/' + package.name)
         return self.extract_rom_name(vp_file)
     
-    
+    def is_pup_pack_empty(self, pup_path: str) -> bool:
+        """Checks if a PUP pack folder is effectively empty or missing."""
+        if not os.path.exists(pup_path):
+            return True
+        # Using os.walk to check for any files
+        for root, dirs, files in os.walk(pup_path):
+            if files: 
+                return False
+        return True
 
     def extract(self, package: Package) -> None:
         if not os.path.exists(self.visual_pinball_path):
@@ -114,6 +122,15 @@ class VisualPinball:
                 package.add_file(pov_file, 'visual pinball/tables')
 
         self._extract_b2s_table_settings(package, rom_candidates)
+
+        # Logic for PUP packs
+        pup_pack_path = os.path.join(self.visual_pinball_path, "PUPVideos", package.name)
+        
+        if not self.is_pup_pack_empty(pup_pack_path):
+            self.logger.info(f"+ Found valid PUP pack: {package.name}")
+            package.add_folder(pup_pack_path, 'visual pinball/PUPVideos')
+        else:
+            self.logger.info(f"- Ignoring PUP pack: {package.name} (Folder is empty or missing)")
 
         # --- DYNAMIC MUSIC SCANNING ENGINE ---
         self.logger.info("--------------------------------------------------")

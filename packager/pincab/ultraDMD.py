@@ -35,9 +35,15 @@ class UltraDMD:
                     self.logger.info("+ Ultra DMD is '%s'" % ultraDMDDir)
                     package.set_field('visual pinball/info/ultraDMD', ultraDMDDir)
 
-                    path = tablePath.joinpath(ultraDMDItem)
-                    for file in tablePath.joinpath(ultraDMDItem).glob('**/*'):
-                        package.add_file(file, 'UltraDMD/content')
+                    for file in ultraDMDItem.glob('**/*'):
+                        if not file.is_file():
+                            continue
+                        relative_path = file.relative_to(ultraDMDItem).parent
+                        if relative_path == Path('.'):
+                            dest_field_path = f"UltraDMD/{ultraDMDDir}"
+                        else:
+                            dest_field_path = f"UltraDMD/{ultraDMDDir}/{relative_path.as_posix()}"
+                        package.add_file(file, dest_field_path)
 
     def deploy(self, package: Package) -> None:
         if not os.path.exists(self.baseModel.visual_pinball_path):
@@ -54,7 +60,7 @@ class UltraDMD:
         ultraDMD = package.get_field('visual pinball/info/ultraDMD')
 
         copytree(self.logger,
-                 self.baseModel.tmp_path + "/" + package.name + "/UltraDMD/content",
+                 self.baseModel.tmp_path + "/" + package.name + "/UltraDMD/" + ultraDMD,
                  self.baseModel.visual_pinball_path + "/tables/" + ultraDMD + ".UltraDMD")
         return True
 

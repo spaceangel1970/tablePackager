@@ -62,6 +62,9 @@ class Manifest:
         self.content['UltraDMD'] = collections.OrderedDict()
         self.content['UltraDMD']['content'] = []
 
+        self.content['FlexDMD'] = collections.OrderedDict()
+        self.content['FlexDMD']['content'] = []
+
         self.content['VPinMAME'] = collections.OrderedDict()
         self.content['VPinMAME']['cfg'] = []
         self.content['VPinMAME']['nvram'] = []
@@ -161,6 +164,10 @@ class Manifest:
         normalized_path = field_path.replace('PuP Pack', 'PuP')
         field_list = normalized_path.split('/')
         for field_type in field_list:
+            if field_type == '':
+                continue
+            if field_type not in content:
+                return None, None
             content = content[field_type]
         for file in content:
             if file['file']['name'] == filename:
