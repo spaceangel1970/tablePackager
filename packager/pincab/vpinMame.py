@@ -4,6 +4,7 @@ import shutil
 from pathlib import Path
 import tempfile
 import xml.etree.ElementTree as ET
+import re
 from packager.tools.toolbox import *
 from packager.model.package import Package
 
@@ -12,6 +13,29 @@ class VPinMame:
     def __init__(self, logger, baseModel):
         self.__baseModel = baseModel
         self.__logger = logger
+
+    def _strip_package_version(self, table_name: str) -> str:
+        if not table_name:
+            return table_name
+        stripped_name = re.sub(r'\s+(?:v?)(?:\d+(?:\.\d+)*)(?:\s*VR)?\s*$', '', table_name, flags=re.IGNORECASE)
+        return stripped_name.strip()
+
+    def _dmd_ini_header_candidates(self, package: Package, rom: str) -> list:
+        candidates = []
+        rom_candidate = rom.lower().strip()
+        if rom_candidate:
+            candidates.append(rom_candidate)
+
+        # Always attempt filename-minus-version header matching as primary candidate
+        # (since it's used when UltraDMD is deployed with custom DMD settings).
+        # This works regardless of whether ultraDMD field is set yet during extraction.
+        table_header = self._strip_package_version(package.name)
+        if table_header:
+            table_candidate = table_header.lower().strip()
+            if table_candidate not in candidates:
+                candidates.insert(0, table_candidate)
+
+        return candidates
 
     @property
     def logger(self):
@@ -138,7 +162,15 @@ class VPinMame:
                     
                     captured_lines = []
                     inside_rom_block = False
-                    target_header = f"[{rom.lower()}]"
+                    matched_header = None
+                    header_candidates = self._dmd_ini_header_candidates(package, rom)
+                    target_headers = [f"[{candidate}]" for candidate in header_candidates if candidate]
+                    
+                    # Determine the filename-based header candidate (first one if it's not rom)
+                    filename_header_candidate = None
+                    table_header = self._strip_package_version(package.name)
+                    if table_header:
+                        filename_header_candidate = f"[{table_header.lower().strip()}]"
                     
                     for line in ini_lines:
                         clean_line = line.strip().lower()
@@ -146,19 +178,24 @@ class VPinMame:
                         if clean_line.startswith('[') and clean_line.endswith(']'):
                             if inside_rom_block:
                                 break
-                            if clean_line == target_header:
+                            if clean_line in target_headers:
                                 inside_rom_block = True
+                                matched_header = clean_line
                         
                         if inside_rom_block:
-                            # If we are reading a parent ROM block but we have an active alias game running,
-                            # dynamically rename the INI block header to use the table's primary active alias.
-                            if rom.lower() != primary_table_rom.lower() and clean_line == target_header:
+                            # Only rename the header if it's a ROM name match (not a filename match).
+                            # Keep filename-based headers as-is in the extracted slice.
+                            if (matched_header and 
+                                matched_header != filename_header_candidate and
+                                matched_header != f"[{primary_table_rom.lower()}]" and 
+                                clean_line == matched_header):
                                 captured_lines.append(f"[{primary_table_rom.lower()}]\n")
                             else:
                                 captured_lines.append(line)
                     
                     if captured_lines:
-                        self.logger.info(f"++ Slicing out custom DMD profile details for [{rom}] mapped to [{primary_table_rom}]")
+                        header_name = matched_header.strip('[]') if matched_header else rom
+                        self.logger.info(f"++ Slicing out custom DMD profile details for [{header_name}] mapped to [{primary_table_rom}]")
                         dest_ini_dir = os.path.join(package.directory, package.name, 'VPinMAME')
                         os.makedirs(dest_ini_dir, exist_ok=True)
                         dest_ini_file = os.path.normpath(os.path.join(dest_ini_dir, 'DmdDevice.ini'))
