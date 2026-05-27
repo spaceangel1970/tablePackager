@@ -60,10 +60,8 @@ class Manifest:
         self.content['visual pinball']['Music'] = []
 
         self.content['UltraDMD'] = collections.OrderedDict()
-        self.content['UltraDMD']['content'] = []
 
         self.content['FlexDMD'] = collections.OrderedDict()
-        self.content['FlexDMD']['content'] = []
 
         self.content['VPinMAME'] = collections.OrderedDict()
         self.content['VPinMAME']['cfg'] = []

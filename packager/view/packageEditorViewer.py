@@ -376,7 +376,7 @@ class PackageEditorViewer(Frame, Observer):
         accepted_files = (("all files", "*.*"))
         required_name = self.packageEditorModel.package.name
 
-        if 'UltraDMD/content' in item['tags']:
+        if 'UltraDMD' in item['tags']:
             ultraDMDDir = filedialog.askdirectory(parent=self.__topLevel,
                                                   initialdir=self.__last_dir,
                                                   title="Select UltraDMD Directory to import")

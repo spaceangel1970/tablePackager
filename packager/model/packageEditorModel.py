@@ -135,7 +135,8 @@ class PackageEditorModel(Observable):
         ultra_dmd_dir = str(Path(src_dir).stem)
         self.package.set_field('visual pinball/info/ultraDMD', ultra_dmd_dir)
         for file in Path(src_dir).glob('**/*'):
-            self.package.add_file(file, 'UltraDMD/content')
+            if file.is_file():
+                self.package.add_file(file, f'UltraDMD/{ultra_dmd_dir}')
 
     def scan_pup_for_table(self):
         table_name = self.package.get_field('info/table name')
