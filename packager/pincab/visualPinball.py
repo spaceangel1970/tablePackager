@@ -109,11 +109,8 @@ class VisualPinball:
             package.add_file(ini_file, 'visual pinball/tables')
         else:
             if pov_file.exists():
-                overwrite_pov = tkinter.messagebox.askokcancel("Overwrite POV file ?",
-                                                               "Do you want to update the existing Visual Pinball table configuration file ?")
-                if overwrite_pov:
-                    self.logger.warning("* extract and overwrite pov file")
-                    self.extract_pov_file(package, vp_file)
+                self.logger.warning("* extract and overwrite pov file")
+                self.extract_pov_file(package, vp_file)
             else:
                 self.logger.warning("* no pov/ini file found, extract pov file")
                 self.extract_pov_file(package, vp_file)

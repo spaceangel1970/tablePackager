@@ -81,13 +81,7 @@ class InstalledTablesModel(Observable):
                         result = messagebox.showerror("Extraction",
                                                       "A protected table package already exist.");
                         continue
-                    result = messagebox.askokcancel("Extraction",
-                                                    "Table package already extracted, would you like to merge it ?")
-                    if result:
-                        to_overwrite = True
-                    else:
-                        self.logger.info("Extraction canceled")
-                        continue
+                    to_overwrite = True
                 clean_dir(self.baseModel.tmp_path)
                 self.logger.info("--[Working on '%s']------------------" % (table['name']))
 

@@ -30,15 +30,19 @@ class FlexDMD:
 
         # 1. FlexDMD Detection Logic
         for flexDMDItem in tablePath.glob('**/*.FlexDMD'):
-            flexDMDDir = str(Path(flexDMDItem).stem)
-            score = searchSentenceInString(flexDMDDir, table_name)
+            flexDMDDir = str(Path(flexDMDItem).name)
+            flexDMDStem = str(Path(flexDMDItem).stem)
+            score = searchSentenceInString(flexDMDStem, table_name)
             if score > 0.2:
-                # ... (Keep your existing FlexDMD extraction logic here)
-                # ...
+                self.logger.info(f"+ Auto-detected and adding FlexDMD: '{flexDMDDir}' (score={score:.2f})")
                 package.set_field('visual pinball/info/flexDMD', flexDMDDir)
-                for file in flexDMDItem.glob('**/*'):
+                for file in Path(flexDMDItem).glob('**/*'):
                     if file.is_file():
-                        package.add_file(file, f'FlexDMD/{flexDMDDir}')
+                        rel_path = file.relative_to(flexDMDItem)
+                        dst_field = f"FlexDMD/{flexDMDDir}"
+                        if str(rel_path.parent) != '.':
+                            dst_field += f"/{str(rel_path.parent).replace('\\', '/')}"
+                        package.add_file(str(file), dst_field)
 
         # 2. UltraDMD / DmdDevice.ini Logic (MOVED OUTSIDE)
         # This now runs for every table, but only executes if the folder is found
@@ -71,9 +75,11 @@ class FlexDMD:
         self.logger.info("* FlexDMD files")
         flexDMD = package.get_field('visual pinball/info/flexDMD')
 
+        dest_name = flexDMD if flexDMD.lower().endswith('.flexdmd') else f"{flexDMD}.FlexDMD"
+
         copytree(self.logger,
-             self.baseModel.tmp_path + "/" + package.name + "/FlexDMD",
-             self.baseModel.visual_pinball_path + "/tables/" + flexDMD + ".FlexDMD")
+             self.baseModel.tmp_path + "/" + package.name + "/FlexDMD/" + flexDMD,
+             self.baseModel.visual_pinball_path + "/tables/" + dest_name)
         return True
 
     def delete(self, table_name: str, dir_name: str = None) -> None:
@@ -85,18 +91,16 @@ class FlexDMD:
 
         if dir_name is None:
             for flexDMDItem in tablePath.glob('**/*.FlexDMD'):
-                flexDMDDir = str(Path(flexDMDItem).stem)
-                score = searchSentenceInString(flexDMDDir, table_name)
+                flexDMDDir = str(Path(flexDMDItem).name)
+                score = searchSentenceInString(str(Path(flexDMDItem).stem), table_name)
                 self.logger.info(
-                    "+ Looking for FlexDMD '%s' (score=%02f)" % (Path(flexDMDItem).stem, score))
+                    "+ Looking for FlexDMD '%s' (score=%02f)" % (flexDMDDir, score))
                 if score > 0.2:
-                    result = messagebox.askokcancel(
-                        "Delete FlexDMD",
-                        "Found %s.FlexDMD directory, delete it ?" % Path(flexDMDItem).stem)
-                    if result:
-                        self.logger.info("- Remove FlexDMD dir '%s'" % flexDMDDir)
-                        shutil.rmtree(flexDMDItem)
+                    self.logger.info("- Remove FlexDMD dir '%s'" % flexDMDDir)
+                    shutil.rmtree(flexDMDItem)
         else:
             self.logger.info("- Remove FlexDMD dir '%s'" % dir_name)
-            delPath = self.baseModel.visual_pinball_path + '/tables/' + dir_name + '.FlexDMD'
-            shutil.rmtree(delPath)
+            dest_name = dir_name if dir_name.lower().endswith('.flexdmd') else f"{dir_name}.FlexDMD"
+            delPath = self.baseModel.visual_pinball_path + '/tables/' + dest_name
+            if os.path.exists(delPath):
+                shutil.rmtree(delPath)

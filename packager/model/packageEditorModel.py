@@ -132,11 +132,15 @@ class PackageEditorModel(Observable):
     def add_ultra_dmd(self, viewer, dataPath, src_dir):
         self.logger.info("* UltraDMD files")
 
-        ultra_dmd_dir = str(Path(src_dir).stem)
+        ultra_dmd_dir = str(Path(src_dir).name)
         self.package.set_field('visual pinball/info/ultraDMD', ultra_dmd_dir)
         for file in Path(src_dir).glob('**/*'):
             if file.is_file():
-                self.package.add_file(file, f'UltraDMD/{ultra_dmd_dir}')
+                rel_path = file.relative_to(src_dir)
+                dst_field = f"UltraDMD/{ultra_dmd_dir}"
+                if str(rel_path.parent) != '.':
+                    dst_field += f"/{str(rel_path.parent).replace('\\', '/')}"
+                self.package.add_file(str(file), dst_field)
 
     def scan_pup_for_table(self):
         table_name = self.package.get_field('info/table name')
