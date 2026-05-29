@@ -31,23 +31,26 @@ class UltraDMD:
             
             # Auto-proceed if score > 0.2
             if score > 0.2:
-                self.logger.info(f"+ Auto-detected and adding UltraDMD: '{ultraDMDDir}' (score={score:.2f})")
+                self.logger.info(f"[UltraDMD Scan] Match found: '{ultraDMDDir}' (Score: {score:.2f})")
                 
+                if "UltraDMD" not in package.manifest.content:
+                    package.manifest.content["UltraDMD"] = {"Files": []}
+                elif "Files" not in package.manifest.content["UltraDMD"]:
+                    package.manifest.content["UltraDMD"]["Files"] = []
+
                 package.set_field('visual pinball/info/ultraDMD', ultraDMDDir)
                 
-                # Recursively add all files within the UltraDMD folder
+                self.logger.info(f"[UltraDMD Scan] Indexing files for {ultraDMDDir}...")
                 for file in Path(ultraDMDItem).glob('**/*'):
                     if file.is_file():
-                        rel_path = file.relative_to(ultraDMDItem)
-                        dst_field = f"UltraDMD/{ultraDMDDir}"
-                        if str(rel_path.parent) != '.':
-                            dst_field += f"/{str(rel_path.parent).replace('\\', '/')}"
-                        package.add_file(str(file), dst_field)
+                        rel_path = file.relative_to(ultraDMDItem.parent)
+                        package.add_file(str(file), f"UltraDMD/{ultraDMDDir}", dst_file=str(rel_path).replace('\\', '/'))
                 
                 # 2. Slicing DmdDevice.ini logic
                 vpinmame_base = os.path.abspath(os.path.join(self.baseModel.visual_pinball_path, 'VPinMAME'))
                 dmd_ini_path = os.path.join(vpinmame_base, 'DmdDevice.ini')
                 if os.path.exists(dmd_ini_path):
+                    self.logger.info(f"[UltraDMD Scan] Searching DmdDevice.ini for section: [{ultraDMDStem}]")
                     try:
                         with open(dmd_ini_path, 'r', encoding='utf-8', errors='ignore') as f:
                             ini_lines = f.readlines()
@@ -66,7 +69,9 @@ class UltraDMD:
                             with open(os.path.join(vpm_dest_dir, 'DmdDevice.ini'), 'w', encoding='utf-8') as f_out:
                                 f_out.writelines(captured_lines)
                             package.set_field('visual pinball/info/has_custom_dmd', 'Yes')
-                            self.logger.info(f"++ Sliced DmdDevice.ini settings for UltraDMD: {ultraDMDStem}")
+                            self.logger.info(f"[UltraDMD Scan] ++ Successfully sliced and saved DmdDevice.ini block for {ultraDMDStem}")
+                        else:
+                            self.logger.info(f"[UltraDMD Scan] -- No matching section [{ultraDMDStem}] found in DmdDevice.ini")
                     except Exception as e:
                         self.logger.error(f"[UltraDMD/DMD LOG] Error slicing DmdDevice.ini: {e}")
 
@@ -85,10 +90,14 @@ class UltraDMD:
         ultraDMD = package.get_field('visual pinball/info/ultraDMD')
 
         dest_name = ultraDMD if ultraDMD.lower().endswith('.ultradmd') else f"{ultraDMD}.UltraDMD"
+        src_path = os.path.join(self.baseModel.tmp_path, package.name, "UltraDMD", "Files", dest_name)
+        dest_path = os.path.join(self.baseModel.visual_pinball_path, "tables", dest_name)
 
-        copytree(self.logger,
-                 self.baseModel.tmp_path + "/" + package.name + "/UltraDMD/" + ultraDMD,
-                 self.baseModel.visual_pinball_path + "/tables/" + dest_name)
+        if os.path.exists(src_path):
+            if os.path.exists(dest_path):
+                self.logger.info(f"- Removing existing UltraDMD directory for overwrite: {dest_name}")
+                shutil.rmtree(dest_path, ignore_errors=True)
+            copytree(self.logger, src_path, dest_path)
         return True
 
     def delete(self, table_name: str, dir_name: str = None) -> None:

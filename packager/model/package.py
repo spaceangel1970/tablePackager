@@ -133,19 +133,22 @@ class Manifest:
         content = self.__content
         # Handle UI field route intercepts
         normalized_path = field_path.replace('PuP Pack', 'PuP')
-        field_list = normalized_path.split('/')
+        field_list = [f for f in normalized_path.split('/') if f]
         for field in field_list[:-1]:
+            if field not in content:
+                content[field] = collections.OrderedDict()
             content = content[field]
         content[field_list[-1]] = value
 
     def get_field(self, field_path: str):
         content = self.__content
         normalized_path = field_path.replace('PuP Pack', 'PuP')
-        field_list = normalized_path.split('/')
+        field_list = [f for f in normalized_path.split('/') if f]
         for field in field_list[:-1]:
-            if field == '': continue
+            if field not in content:
+                return ''
             content = content[field]
-        return content[field_list[-1]]
+        return content.get(field_list[-1], '')
 
     def exists_field(self, field_path: str) -> bool:
         content = self.__content
@@ -217,13 +220,21 @@ class Manifest:
 
     def add_file_info(self, field_path: str, file: dict):
         normalized_path = field_path.replace('PuP Pack', 'PuP')
-        field_list = normalized_path.split('/')
+        field_list = [f for f in normalized_path.split('/') if f]
         content = self.__content
-        for field_type in field_list:
-            if field_type == '':
-                continue
-            content = content[field_type]
-        content.append({'file': file})
+        
+        for index, field_type in enumerate(field_list):
+            if index == len(field_list) - 1:
+                if field_type not in content:
+                    content[field_type] = []
+                content = content[field_type]
+            else:
+                if field_type not in content:
+                    content[field_type] = collections.OrderedDict()
+                content = content[field_type]
+        
+        if isinstance(content, list):
+            content.append({'file': file})
 
     def add_file(self, field_path: str, full_path_src_file: str):
         manifest_file = None

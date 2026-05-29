@@ -38,11 +38,9 @@ class FlexDMD:
                 package.set_field('visual pinball/info/flexDMD', flexDMDDir)
                 for file in Path(flexDMDItem).glob('**/*'):
                     if file.is_file():
-                        rel_path = file.relative_to(flexDMDItem)
-                        dst_field = f"FlexDMD/{flexDMDDir}"
-                        if str(rel_path.parent) != '.':
-                            dst_field += f"/{str(rel_path.parent).replace('\\', '/')}"
-                        package.add_file(str(file), dst_field)
+                        # Flatten manifest structure to prevent KeyErrors while preserving physical paths
+                        rel_path = file.relative_to(flexDMDItem.parent)
+                        package.add_file(str(file), f"FlexDMD/{flexDMDDir}", dst_file=str(rel_path).replace('\\', '/'))
                 
                 # 2. Slicing DmdDevice.ini logic
                 vpinmame_base = os.path.abspath(os.path.join(self.baseModel.visual_pinball_path, 'VPinMAME'))

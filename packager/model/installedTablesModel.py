@@ -88,11 +88,12 @@ class InstalledTablesModel(Observable):
                 package = Package(self.baseModel, table['name'])
                 package.new(self.baseModel.tmp_path)
                 # TODO: besoin de copier les manifests ici pour la comparer les infos de fichiers
-                if os.path.exists(self.baseModel.installed_path + '/' + table['name'] + '.manifest.json'):
-                    self.logger.info("package found, use it")
+                manifest_check_path = os.path.normpath(os.path.join(self.baseModel.installed_path, table['name'] + '.manifest.json'))
+                if os.path.exists(manifest_check_path):
+                    self.logger.info(f"++ Found existing manifest for merge at: {manifest_check_path}")
                     package.merge(installed=True)
                 else:
-                    self.logger.info("no package found, create it")
+                    self.logger.info(f"-- No existing manifest found at {self.baseModel.installed_path}, starting fresh.")
 
                 if context['visual_pinball'].get():
                     self.baseModel.visualPinball.extract(package)

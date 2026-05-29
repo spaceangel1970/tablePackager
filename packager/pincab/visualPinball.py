@@ -338,8 +338,8 @@ class VisualPinball:
             # --- B2S TABLE SETTINGS ---
         b2s_settings_file = Path(self.visual_pinball_path + "/tables/" + vpx_file.stem + '.xml')
         if b2s_settings_file.exists():
-            self.logger.info(f"+ Found B2STableSettings.xml: {b2s_settings_file.name}")
-            package.add_file(b2s_settings_file, 'visual pinball/tables')
+            self.logger.info("- remove B2STableSettings.xml file: %s" % b2s_settings_file)
+            os.remove(b2s_settings_file)
         else:
             self.logger.info("- No B2STableSettings.xml found for this table")
             
