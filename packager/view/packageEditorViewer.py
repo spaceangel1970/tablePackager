@@ -508,7 +508,7 @@ class PackageEditorViewer(Frame, Observer):
                         # Prevent duplicate display rows for the same filename
                         seen_files = set()
                         for element in content[product][category]:
-                            if element.get('file') is not None:
+                            if isinstance(element, dict) and element.get('file') is not None:
                                 file = element['file']
                                 # Skip duplicates (same filename) which can appear in merged manifests
                                 if file['name'] in seen_files:

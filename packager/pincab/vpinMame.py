@@ -280,7 +280,11 @@ class VPinMame:
             self.logger.error(f"[RES Checker Log] Failed scanning for table .res asset: {str(e)}")
 
         # Update and save the package metadata tree presence flags
-        package.set_field('visual pinball/info/has_custom_dmd', 'Yes' if custom_dmd_processed else 'No')
+        has_custom = 'Yes' if custom_dmd_processed else 'No'
+        if package.exists_field('visual pinball/info/has_custom_dmd'):
+            if package.get_field('visual pinball/info/has_custom_dmd') == 'Yes':
+                has_custom = 'Yes'
+        package.set_field('visual pinball/info/has_custom_dmd', has_custom)
         package.set_field('visual pinball/info/has_alias', 'Yes' if alias_processed else 'No')
 
     def deploy(self, package: Package) -> None:

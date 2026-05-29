@@ -43,23 +43,35 @@ class FlexDMD:
                         if str(rel_path.parent) != '.':
                             dst_field += f"/{str(rel_path.parent).replace('\\', '/')}"
                         package.add_file(str(file), dst_field)
+                
+                # 2. Slicing DmdDevice.ini logic
+                vpinmame_base = os.path.abspath(os.path.join(self.baseModel.visual_pinball_path, 'VPinMAME'))
+                dmd_ini_path = os.path.join(vpinmame_base, 'DmdDevice.ini')
+                if os.path.exists(dmd_ini_path):
+                    try:
+                        with open(dmd_ini_path, 'r', encoding='utf-8', errors='ignore') as f:
+                            ini_lines = f.readlines()
+                        target_header = f"[{flexDMDStem.lower().strip()}]"
+                        captured_lines = []
+                        inside_block = False
+                        for line in ini_lines:
+                            clean = line.strip().lower()
+                            if clean.startswith('[') and clean.endswith(']'):
+                                if inside_block: break
+                                if clean == target_header: inside_block = True
+                            if inside_block: captured_lines.append(line)
+                        if captured_lines:
+                            vpm_dest_dir = os.path.join(package.directory, package.name, 'VPinMAME')
+                            os.makedirs(vpm_dest_dir, exist_ok=True)
+                            with open(os.path.join(vpm_dest_dir, 'DmdDevice.ini'), 'w', encoding='utf-8') as f_out:
+                                f_out.writelines(captured_lines)
+                            package.set_field('visual pinball/info/has_custom_dmd', 'Yes')
+                            self.logger.info(f"++ Sliced DmdDevice.ini settings for FlexDMD: {flexDMDStem}")
+                    except Exception as e:
+                        self.logger.error(f"[FlexDMD/DMD LOG] Error slicing DmdDevice.ini: {e}")
 
-        # 2. UltraDMD / DmdDevice.ini Logic (MOVED OUTSIDE)
-        # This now runs for every table, but only executes if the folder is found
-        try:
-            rom_field = package.get_field('visual pinball/info/romName')
-            roms = rom_field if isinstance(rom_field, list) else [rom_field]
-            vpinmame_base = os.path.abspath(os.path.join(self.baseModel.visual_pinball_path, 'VPinMAME'))
-            
-            for rom in roms:
-                if rom and os.path.isdir(os.path.join(vpinmame_base, f"{rom}.UltraDMD")):
-                    dmd_ini_path = os.path.join(vpinmame_base, 'DmdDevice.ini')
-                    if os.path.exists(dmd_ini_path):
-                        # ... (Include your header matching and file writing logic here)
-                        self.logger.info(f"UltraDMD detected for {rom}, extracting settings...")
-                        # ...
-        except Exception as e:
-            self.logger.error(f"[DMD LOG] Error extracting DmdDevice.ini: {str(e)}")
+        if not package.exists_field('visual pinball/info/has_custom_dmd'):
+            package.set_field('visual pinball/info/has_custom_dmd', 'No')
 
     def deploy(self, package: Package) -> None:
         if not os.path.exists(self.baseModel.visual_pinball_path):
