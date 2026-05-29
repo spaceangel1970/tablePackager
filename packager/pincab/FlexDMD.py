@@ -38,8 +38,7 @@ class FlexDMD:
                 package.set_field('visual pinball/info/flexDMD', flexDMDDir)
                 for file in Path(flexDMDItem).glob('**/*'):
                     if file.is_file():
-                        # Flatten manifest structure to prevent KeyErrors while preserving physical paths
-                        rel_path = file.relative_to(flexDMDItem.parent)
+                        rel_path = file.relative_to(flexDMDItem)
                         package.add_file(str(file), f"FlexDMD/{flexDMDDir}", dst_file=str(rel_path).replace('\\', '/'))
                 
                 # 2. Slicing DmdDevice.ini logic
@@ -86,10 +85,14 @@ class FlexDMD:
         flexDMD = package.get_field('visual pinball/info/flexDMD')
 
         dest_name = flexDMD if flexDMD.lower().endswith('.flexdmd') else f"{flexDMD}.FlexDMD"
+        src_path = os.path.join(self.baseModel.tmp_path, package.name, "FlexDMD", flexDMD)
+        dest_path = os.path.join(self.baseModel.visual_pinball_path, "tables", dest_name)
 
-        copytree(self.logger,
-             self.baseModel.tmp_path + "/" + package.name + "/FlexDMD/" + flexDMD,
-             self.baseModel.visual_pinball_path + "/tables/" + dest_name)
+        if os.path.exists(src_path):
+            if os.path.exists(dest_path):
+                self.logger.info(f"- Removing existing FlexDMD directory for overwrite: {dest_name}")
+                shutil.rmtree(dest_path, ignore_errors=True)
+            copytree(self.logger, src_path, dest_path)
         return True
 
     def delete(self, table_name: str, dir_name: str = None) -> None:

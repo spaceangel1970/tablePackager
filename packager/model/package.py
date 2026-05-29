@@ -236,10 +236,11 @@ class Manifest:
         if isinstance(content, list):
             content.append({'file': file})
 
-    def add_file(self, field_path: str, full_path_src_file: str):
+    def add_file(self, field_path: str, full_path_src_file: str, name: str = None):
         manifest_file = None
 
-        (file, content) = self.get_file(field_path, Path(full_path_src_file).name)
+        target_name = name if name else Path(full_path_src_file).name
+        (file, content) = self.get_file(field_path, target_name)
         if file is not None:
             sha1 = sha1sum(full_path_src_file)
             if file['file']['sha1'] != sha1:
@@ -250,7 +251,7 @@ class Manifest:
             return
 
         file = collections.OrderedDict()
-        file['name'] = Path(full_path_src_file).name
+        file['name'] = target_name
         file['size'] = os.path.getsize(full_path_src_file)
         file['sha1'] = sha1sum(full_path_src_file)
         file['author(s)'] = ''
@@ -616,12 +617,18 @@ class Package:
             complete_dst_file_path = os.path.normpath(f"{dst_folder_path}/{dst_file}")
             
             # Ensure folder tree structures exist physically on your drive
-            os.makedirs(dst_folder_path, exist_ok=True)
+            os.makedirs(os.path.dirname(complete_dst_file_path), exist_ok=True)
                 
-            (dst_file, isSameFile) = self.collision_detector(full_path_src_file,
+            (final_name, isSameFile) = self.collision_detector(full_path_src_file,
                                                              complete_dst_file_path,
                                                              check_sha1=True)
                                                              
+            # Reconstruct path with potential subfolders preserved
+            if os.path.dirname(dst_file):
+                dst_file = os.path.join(os.path.dirname(dst_file), final_name).replace('\\', '/')
+            else:
+                dst_file = final_name
+
             complete_dst_file_path = os.path.normpath(f"{dst_folder_path}/{dst_file}")
             
             self.logger.info("+ add '%s' -> '%s'" % (full_path_src_file, dst_field_path + '/' + dst_file))
@@ -632,7 +639,7 @@ class Package:
             # --- FIXED REGISTRATION ENGINE ---
             # Music files are now permitted to stream through and log themselves 
             # properly to index hooks so the UI Tree View can see them!
-            self.manifest.add_file(dst_field_path, complete_dst_file_path)
+            self.manifest.add_file(dst_field_path, complete_dst_file_path, name=dst_file)
             self.save()
             
         except OSError as e:

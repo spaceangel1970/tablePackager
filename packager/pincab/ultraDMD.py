@@ -37,7 +37,7 @@ class UltraDMD:
                 self.logger.info(f"[UltraDMD Scan] Indexing files for {ultraDMDDir}...")
                 for file in Path(ultraDMDItem).glob('**/*'):
                     if file.is_file():
-                        rel_path = file.relative_to(ultraDMDItem.parent)
+                        rel_path = file.relative_to(ultraDMDItem)
                         package.add_file(str(file), f"UltraDMD/{ultraDMDDir}", dst_file=str(rel_path).replace('\\', '/'))
                 
                 # 2. Slicing DmdDevice.ini logic
