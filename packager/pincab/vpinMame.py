@@ -218,9 +218,21 @@ class VPinMame:
                     snippet_root = ET.Element('B2STableSettings')
                     captured = False
 
+                    # Base lookups: ROM name and Primary ROM alias
                     lookup_names = {rom.lower().strip()}
                     if primary_table_rom.lower().strip() != rom.lower().strip():
                         lookup_names.add(primary_table_rom.lower().strip())
+
+                    # Expand lookups to handle space-stripping and metadata (parentheses) removal
+                    # e.g., "Fireworks Mania (Original 2026)" -> "fireworksmania"
+                    expanded = set()
+                    for name in lookup_names:
+                        expanded.add(name.replace(' ', ''))
+                        no_meta = re.sub(r'\(.*?\)', '', name).strip()
+                        if no_meta:
+                            expanded.add(no_meta)
+                            expanded.add(no_meta.replace(' ', ''))
+                    lookup_names.update(expanded)
 
                     available_tags = [child.tag for child in root]
 

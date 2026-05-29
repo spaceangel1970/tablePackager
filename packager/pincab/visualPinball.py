@@ -93,11 +93,13 @@ class VisualPinball:
                 if table_name and table_name not in rom_candidates:
                     rom_candidates.append(table_name)
 
-        if not rom_candidates:
-            self.logger.info("- no rom or table name found in vp file")
-        else:
-            self.logger.info(f"+ rom/table names are {rom_candidates}")
-            package.set_field('visual pinball/info/romName', rom_candidates)
+        # Always include the package name (filename) as a lookup candidate.
+        # Many modern tables and "Originals" index settings by filename rather than ROM.
+        if package.name and package.name not in rom_candidates:
+            rom_candidates.append(package.name)
+
+        self.logger.info(f"+ rom/table names are {rom_candidates}")
+        package.set_field('visual pinball/info/romName', rom_candidates)
 
         package.add_file(vp_file, 'visual pinball/tables')  # Add vpx file
         if not directb2s_file.exists():  # Add directb2s file
@@ -431,9 +433,20 @@ class VisualPinball:
             # Normalize to lowercase for robust alias matching
             rom_names_lower = {str(name).strip().lower() for name in rom_names if name}
 
+            # Account for entries where spaces are stripped and/or metadata is removed
+            # e.g., "Fireworks Mania (Original 2026)" -> "fireworksmania"
+            lookup_names = set(rom_names_lower)
+            for name in rom_names_lower:
+                lookup_names.add(name.replace(' ', ''))
+                no_meta = re.sub(r'\(.*?\)', '', name).strip()
+                if no_meta:
+                    lookup_names.add(no_meta)
+                    lookup_names.add(no_meta.replace(' ', ''))
+
             for child in root:
-                # Direct match check
-                if child.tag.lower() in rom_names_lower:
+                tag_lower = child.tag.lower()
+                # Check for direct match or match without spaces/metadata
+                if tag_lower in lookup_names:
                     snippet_root.append(copy.deepcopy(child))
                     self.logger.info(f"+ Found B2STableSettings entry for: {child.tag}")
                     added = True
