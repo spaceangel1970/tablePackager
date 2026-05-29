@@ -32,12 +32,6 @@ class UltraDMD:
             # Auto-proceed if score > 0.2
             if score > 0.2:
                 self.logger.info(f"[UltraDMD Scan] Match found: '{ultraDMDDir}' (Score: {score:.2f})")
-                
-                if "UltraDMD" not in package.manifest.content:
-                    package.manifest.content["UltraDMD"] = {"Files": []}
-                elif "Files" not in package.manifest.content["UltraDMD"]:
-                    package.manifest.content["UltraDMD"]["Files"] = []
-
                 package.set_field('visual pinball/info/ultraDMD', ultraDMDDir)
                 
                 self.logger.info(f"[UltraDMD Scan] Indexing files for {ultraDMDDir}...")
@@ -90,7 +84,7 @@ class UltraDMD:
         ultraDMD = package.get_field('visual pinball/info/ultraDMD')
 
         dest_name = ultraDMD if ultraDMD.lower().endswith('.ultradmd') else f"{ultraDMD}.UltraDMD"
-        src_path = os.path.join(self.baseModel.tmp_path, package.name, "UltraDMD", "Files", dest_name)
+        src_path = os.path.join(self.baseModel.tmp_path, package.name, "UltraDMD", ultraDMD)
         dest_path = os.path.join(self.baseModel.visual_pinball_path, "tables", dest_name)
 
         if os.path.exists(src_path):
