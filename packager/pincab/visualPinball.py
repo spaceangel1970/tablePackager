@@ -159,19 +159,6 @@ class VisualPinball:
             clean_iso_timestamp = f"{now.year:04d}-{now.month:02d}-{now.day:02d}T{now.hour:02d}:{now.minute:02d}:{now.second:02d}.{now.microsecond:06d}+0000"
             
             packed_count = 0
-            vp_data = package.manifest.content['visual pinball']
-            
-            for track_path in found_music_tracks:
-                safe_track_path = track_path.replace('\\', '/')
-                full_music_path = Path(os.path.normpath(os.path.join(music_base_dir, track_path)))
-                
-                if full_music_path.exists() and full_music_path.is_file():
-                    self.logger.info(f"  -> BUNDLING: '{track_path}'")
-                    
-                    relative_dest_dir = os.path.dirname(safe_track_path)
-                    file_size = full_music_path.stat().st_size
-                    
-                    # TRACK FOLDERS TO AVOID DUPLICATE UI NODES
             added_folders = set()
             
             for track_path in found_music_tracks:
@@ -212,8 +199,6 @@ class VisualPinball:
                         packed_count += 1
                     except Exception as e:
                         self.logger.error(f"Failed to copy '{full_music_path}' to '{physical_dest}': {e}")
-                                    
-                    packed_count += 1
                 else:
                     self.logger.warning(f"  ! MISSING ON DISK: '{track_path}' (Expected in: {music_base_dir})")
             
