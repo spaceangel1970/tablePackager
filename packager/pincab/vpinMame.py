@@ -266,19 +266,6 @@ class VPinMame:
                 except Exception as e:
                     self.logger.error(f"[B2S XML LOG] Error handling custom XML block profile extraction: {str(e)}")
 
-        # 6. --- TABLE DIRECTORY .RES OVERRIDE DETECTOR ---
-        try:
-            tables_dir = os.path.join(self.visual_pinball_path, 'tables')
-            res_filename = f"{package.name}.res"
-            target_res_path = os.path.join(tables_dir, res_filename)
-
-            if os.path.exists(target_res_path) and os.path.isfile(target_res_path):
-                self.logger.info(f"++ Found custom table override screen profile: {res_filename}")
-                package.add_file(Path(target_res_path), 'visual pinball/tables')
-                self.logger.info(f"++ Safely staged .res file via package index mapping.")
-        except Exception as e:
-            self.logger.error(f"[RES Checker Log] Failed scanning for table .res asset: {str(e)}")
-
         # Update and save the package metadata tree presence flags
         has_custom = 'Yes' if custom_dmd_processed else 'No'
         if package.exists_field('visual pinball/info/has_custom_dmd'):

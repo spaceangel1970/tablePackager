@@ -105,6 +105,11 @@ class VisualPinball:
         else:
             package.add_file(directb2s_file, 'visual pinball/tables')
 
+        res_file = vpx_file.with_suffix('.res')
+        if res_file.exists():
+            self.logger.info(f"++ Found custom table override screen profile: {res_file.name}")
+            package.add_file(res_file, 'visual pinball/tables')
+
         if ini_file.exists():
             package.add_file(ini_file, 'visual pinball/tables')
         else:
@@ -334,6 +339,10 @@ class VisualPinball:
         if directb2s_file.exists():
             self.logger.info("- remove %s file" % directb2s_file)
             os.remove(directb2s_file)
+        res_file = vpx_file.with_suffix('.res')
+        if res_file.exists():
+            self.logger.info("- remove %s file" % res_file)
+            os.remove(res_file)
 
             # --- B2S TABLE SETTINGS ---
         b2s_settings_file = Path(self.visual_pinball_path + "/tables/" + vpx_file.stem + '.xml')
