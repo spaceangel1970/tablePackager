@@ -1,5 +1,14 @@
 # Table Packager Release Notes
 
+## What's New in Version 1.2.1
+
+
+### Bug Fixes
+- Fixed permission error when installing from .msi installer
+
+
+# Table Packager Release Notes
+
 ## What's New in Version 1.2.0
 
 /!\ You must uninstall current version before install a new one /!\

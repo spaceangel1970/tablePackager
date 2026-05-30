@@ -15,11 +15,15 @@ class ConfigViewer(Frame):
         self.__is_hide = True
 
     def hide(self):
-        self.__topLevel.withdraw()
+        if self.__topLevel:
+            self.__topLevel.withdraw()
         self.__is_hide = True
 
     def show(self):
         if not self.__is_hide:
+            self.__topLevel.deiconify()
+            self.__topLevel.lift()
+            self.__topLevel.focus_force()
             return
         self.__is_hide = False
         self.__topLevel = Toplevel(self.__parent)
@@ -34,7 +38,7 @@ class ConfigViewer(Frame):
         self.__visualPinballPathLabel.grid(column=0, row=0, sticky='W', padx=2, pady=2)
         self.__visualPinballPathEntry = Entry(self.__infoFrame)
         self.__visualPinballPathEntry.grid(column=1, row=0, padx=2, pady=2)
-        self.__visualPinballPathEntry.insert(END, self.__baseModel.visual_pinball_path)
+        self.__visualPinballPathEntry.insert(END, self.__get_config('visual_pinball_path'))
         self.__visualPinballPathDirBt = Button(self.__infoFrame, image=self.__btDirImage,
                                                command=self.on_choose_visual_pinball_path_dir)
         self.__visualPinballPathDirBt.grid(column=2, row=0, sticky=E, padx=2, pady=2)
@@ -43,7 +47,7 @@ class ConfigViewer(Frame):
         self.__pinballXPathLabel.grid(column=0, row=1, sticky='W', padx=2, pady=2)
         self.__pinballXPathPathEntry = Entry(self.__infoFrame)
         self.__pinballXPathPathEntry.grid(column=1, row=1, padx=2, pady=2)
-        self.__pinballXPathPathEntry.insert(END, self.__baseModel.pinballX_path)
+        self.__pinballXPathPathEntry.insert(END, self.__get_config('pinballX_path'))
         self.__pinballXPathPathDirBt = Button(self.__infoFrame, image=self.__btDirImage,
                                               command=self.on_choose_pinball_x_path_dir)
         self.__pinballXPathPathDirBt.grid(column=2, row=1, sticky=E, padx=2, pady=2)
@@ -52,10 +56,19 @@ class ConfigViewer(Frame):
         self.__pinupSystemPathLabel.grid(column=0, row=2, sticky='W', padx=2, pady=2)
         self.__pinupSystemPathEntry = Entry(self.__infoFrame)
         self.__pinupSystemPathEntry.grid(column=1, row=2, padx=2, pady=2)
-        self.__pinupSystemPathEntry.insert(END, self.__baseModel.pinupSystem_path)
+        self.__pinupSystemPathEntry.insert(END, self.__get_config('pinupSystem_path'))
         self.__pinupSystemPathDirBt = Button(self.__infoFrame, image=self.__btDirImage,
                                              command=self.on_choose_pinup_system_path_dir)
         self.__pinupSystemPathDirBt.grid(column=2, row=2, sticky=E, padx=2, pady=2)
+
+        self.__futurePinballPathLabel = Label(self.__infoFrame, text="Future Pinball path: ")
+        self.__futurePinballPathLabel.grid(column=0, row=3, sticky='W', padx=2, pady=2)
+        self.__futurePinballPathEntry = Entry(self.__infoFrame)
+        self.__futurePinballPathEntry.grid(column=1, row=3, padx=2, pady=2)
+        self.__futurePinballPathEntry.insert(END, self.__get_config('future_pinball_path'))
+        self.__futurePinballPathDirBt = Button(self.__infoFrame, image=self.__btDirImage,
+                                               command=self.on_choose_future_pinball_path_dir)
+        self.__futurePinballPathDirBt.grid(column=2, row=3, sticky=E, padx=2, pady=2)
 
         # =====================================================================
         self.__infoFrame.grid(row=0, column=0, sticky=E + W)
@@ -68,7 +81,6 @@ class ConfigViewer(Frame):
         self.hide()
 
     def on_choose_visual_pinball_path_dir(self):
-        self.__is_hide = True
         path = filedialog.askdirectory(initialdir=self.__visualPinballPathEntry.get())
         if path is None or path == '':
             return
@@ -76,7 +88,6 @@ class ConfigViewer(Frame):
         self.__visualPinballPathEntry.insert(END, path)
 
     def on_choose_pinball_x_path_dir(self):
-        self.__is_hide = True
         path = filedialog.askdirectory(initialdir=self.__pinballXPathPathEntry.get())
         if path is None or path == '':
             return
@@ -84,19 +95,32 @@ class ConfigViewer(Frame):
         self.__pinballXPathPathEntry.insert(END, path)
 
     def on_choose_pinup_system_path_dir(self):
-        self.__is_hide = True
         path = filedialog.askdirectory(initialdir=self.__pinupSystemPathEntry.get())
         if path is None or path == '':
             return
         self.__pinupSystemPathEntry.delete(0, 'end')
         self.__pinupSystemPathEntry.insert(END, path)
 
+    def on_choose_future_pinball_path_dir(self):
+        path = filedialog.askdirectory(initialdir=self.__futurePinballPathEntry.get())
+        if path is None or path == '':
+            return
+        self.__futurePinballPathEntry.delete(0, 'end')
+        self.__futurePinballPathEntry.insert(END, path)
+
     def on_save(self):
         self.__baseModel.config.set('visual_pinball_path', self.__visualPinballPathEntry.get())
         self.__baseModel.config.set('pinballX_path', self.__pinballXPathPathEntry.get())
         self.__baseModel.config.set('pinupSystem_path', self.__pinupSystemPathEntry.get())
+        self.__baseModel.config.set('future_pinball_path', self.__futurePinballPathEntry.get())
         self.__baseModel.config.save()
         self.hide()
 
     def on_cancel(self):
         self.hide()
+
+    def __get_config(self, key):
+        try:
+            return self.__baseModel.config.get(key)
+        except KeyError:
+            return ''
