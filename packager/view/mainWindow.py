@@ -5,7 +5,7 @@ from tkinter import ttk
 from tkinter import *
 import webbrowser
 from os import path as os_path
-from packager.tablePackager import *
+import packager.tablePackager as app
 from packager.view.installedTablesView import *
 from packager.view.packagedTablesView import *
 from packager.view.packageEditorViewer import *
@@ -38,7 +38,7 @@ class MainWindow(Observer, Observable):
 
         # display the menu
         self.__window.configure(menu=self.__menubar)
-        self.__window.title("Pincab Table Packager v" + version)
+        self.__window.title("Pincab Table Packager v" + app.version)
         self.__separator = Separator(self.__window, orient=HORIZONTAL)
 
         self.__installedTablesView = InstalledTablesView(self.__window, self.__baseModel)
@@ -137,8 +137,8 @@ class MainWindow(Observer, Observable):
     def main_loop(self):
         try:
             self.__window.mainloop()
-        except Exception as Err:
-            print(Err)
+        except Exception as e:
+            self.__baseModel.logger.error(f"Main Loop Error: {e}")
 
     def on_option_menu(self):
         self.__configViewer.show()

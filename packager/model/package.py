@@ -3,7 +3,6 @@ import os
 import collections
 import json
 import shutil
-import collections  # <-- ADD THIS LINE HERE
 import os.path
 import time
 from pathlib import *
@@ -90,6 +89,7 @@ class Manifest:
         self.content['media']['TopperVideos'] = []  
         self.content['media']['Loading'] = []  
         self.content['media']['PuP'] = []  # Keep standard layout key intact for file/manifest integrity
+        self.content['logs'] = []
 
     def open(self, path: Path, installed: bool = False) -> None:
         if not os.path.exists(path):

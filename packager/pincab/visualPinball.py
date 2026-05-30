@@ -207,32 +207,14 @@ class VisualPinball:
             self.logger.info(f"* Successfully archived {packed_count} of {len(found_music_tracks)} music tracks.")
         else:
             self.logger.info("- No external background music (.mp3/.ogg) found in this table.")
+
+        # --- SESSION LOG CAPTURE ---
+        log_path = os.path.join(tempfile.gettempdir(), 'tablePackager.log')
+        if os.path.exists(log_path):
+            self.logger.info(f"* Bundling session log: {log_path}")
+            package.add_file(log_path, 'logs', dst_file='Log.txt')
             
         self.logger.info("--------------------------------------------------")
-
-        
-    def _merge_b2s_xml(self, source_xml: str, target_xml: str):
-        if not os.path.exists(target_xml):
-            shutil.copy2(source_xml, target_xml)
-            return
-
-        try:
-            source_tree = ET.parse(source_xml)
-            target_tree = ET.parse(target_xml)
-            
-            source_root = source_tree.getroot()
-            target_root = target_tree.getroot()
-
-            for new_entry in source_root:
-                existing = target_root.find(new_entry.tag)
-                if existing is not None:
-                    target_root.remove(existing)
-                target_root.append(new_entry)
-
-            target_tree.write(target_xml, encoding='utf-8', xml_declaration=True)
-            self.logger.info(f"* Successfully merged {source_xml} into {target_xml}")
-        except Exception as e:
-            self.logger.error(f"Failed to merge B2S XML: {e}")
 
     def deploy(self, package: Package) -> None:
         if not os.path.exists(self.visual_pinball_path):

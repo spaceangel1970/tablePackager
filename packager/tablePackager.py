@@ -1,31 +1,36 @@
 import logging
 import os
 import sys
-
-from packager.view.mainWindow import *
-from packager.model.baseModel import *
-from packager.tools.logHandler import *
+import tempfile
+import tkinter.messagebox
 
 # Major.minor.fix; Minor number++ when package format/info change
 version = '1.2.0'
 package_version = '1.2'
 
+from packager.view.mainWindow import *
+from packager.model.baseModel import *
+from packager.tools.logHandler import *
+
 
 # https://datastudio.google.com/reporting/13ua5g7jmoyHovP4hrqk48HBYGeQbpJ1Z/page/55yX
 
 def main():
-    # --- PYINSTALLER PATH FIX ---
-    # If running inside a PyInstaller EXE, redirect the working directory 
-    # to the temporary folder where the images are extracted.
-    if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
-        os.chdir(sys._MEIPASS)
+    # Ensure the working directory is set to the application directory
+    # This handles both PyInstaller (_MEIPASS) and cx_Freeze/standard execution
+    if getattr(sys, 'frozen', False):
+        if hasattr(sys, '_MEIPASS'):
+            os.chdir(sys._MEIPASS)
+        else:
+            os.chdir(os.path.dirname(sys.executable))
     # ----------------------------
 
+    log_path = os.path.join(tempfile.gettempdir(), 'tablePackager.log')
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s",
         handlers=[
-            #logging.FileHandler("{0}/{1}.log".format('c:/temp', 'log.txt')),
+            logging.FileHandler(log_path, mode='w', encoding='utf-8'),
             logging.StreamHandler()
         ])
     logger = logging.getLogger(__name__)

@@ -88,13 +88,13 @@ def zip_dir(path: str, ziph: zipfile.ZipFile) -> None:
         # 2. Convert directories to absolute paths before finding the relative layout path
         for dir_name in dirs:
             full_dir_path = Path(os.path.join(root, dir_name)).resolve()
-            archive_name = str(full_dir_path.relative_to(parent_anchor))
+            archive_name = full_dir_path.relative_to(parent_anchor).as_posix()
             ziph.write(str(full_dir_path), archive_name)
             
         # 3. Convert files to absolute paths before finding the relative layout path
         for file_name in files:
             full_file_path = Path(os.path.join(root, file_name)).resolve()
-            archive_name = str(full_file_path.relative_to(parent_anchor))
+            archive_name = full_file_path.relative_to(parent_anchor).as_posix()
             ziph.write(str(full_file_path), archive_name)
 
 

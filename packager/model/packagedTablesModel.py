@@ -1,5 +1,6 @@
 from __future__ import annotations
 import tkinter
+import sys
 from packager.model.package import *
 from packager.tools.observer import Observable
 from packager.tools.toolbox import *
@@ -50,7 +51,7 @@ class PackagedTablesModel(Observable):
         self.__selectedPackage = []
         for index in selection:
             self.__selectedPackage.append(self.__packages[index])
-        self.notify_all(self, events=['<<PACKAGE SELECTED>>'], tables=self.__packages)  # update listeners
+        self.notify_all(self, events=['<<PACKAGE SELECTED>>'], tables=self.__selectedPackage)  # update listeners
 
     def unSelectPackages(self):
         self.__selectedPackage = []
@@ -87,6 +88,15 @@ class PackagedTablesModel(Observable):
                 if context['pinupSystem'].get():
                     self.baseModel.pinupSystem.deploy(package, 'visual pinball')
 
+                # --- NEW: Export deployment log to the Application directory ---
+                log_src = os.path.normpath(os.path.join(self.baseModel.tmp_path, packageInfo['name'], 'logs', 'Log.txt'))
+                if os.path.exists(log_src):
+                    # Determine location of the executable (if frozen) or the script directory
+                    app_dir = os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else os.getcwd()
+                    log_dest = os.path.join(app_dir, 'DeploymentLog.txt')
+                    shutil.copy2(log_src, log_dest)
+                    self.logger.info(f"++ Deployment log exported to app root: {log_dest}")
+
                 shutil.copyfile(
                     self.baseModel.tmp_path + '/' + packageInfo['name'] + '/' + packageInfo['name'] + '.manifest.json',
                     self.baseModel.installed_path + '/' + packageInfo['name'] + '.manifest.json')
@@ -103,40 +113,36 @@ class PackagedTablesModel(Observable):
         else:
             self.logger.error("--[Failed]------------------")
         self.notify_all(self, events=['<<END_ACTION>>', '<<ENABLE_ALL>>'])  # update listeners
-        self.baseModel.installedTablesModel
+        self.baseModel.installedTablesModel.update()
 
     def deletePackages(self, viewer):
         self.notify_all(self, events=['<<DISABLE_ALL>>', '<<BEGIN_ACTION>>'])  # update listeners
         packages = ', '.join(p['name'] for p in self.selectedPackage)
-        delConfirmed = tkinter.messagebox.askokcancel("Delete Package",
+        del_confirmed = tkinter.messagebox.askokcancel("Delete Package",
                                                       "Are you sure you want to delete package(s) '%s'" % (packages),
                                                       parent=viewer)
-        if delConfirmed:
+        if del_confirmed:
             self.logger.info("--[Delete Package(s)]------------------")
             for packageInfo in self.selectedPackage:
                 try:
-                    os.unlink(
-                        self.baseModel.package_path + '/' + packageInfo['name'] + self.baseModel.package_extension)
+                    pkg_path = os.path.join(self.baseModel.package_path, packageInfo['name'] + self.baseModel.package_extension)
+                    os.unlink(pkg_path)
+                    self.logger.info(f"+ del {pkg_path}")
                 except OSError as e:
                     self.logger.error(str(e))
-                    continue
-                self.logger.info("+ del %s" % (
-                            self.baseModel.package_path + '/' + packageInfo['name'] + self.baseModel.package_extension))
-            
-            self.logger.info("--[Done]------------------")
             
             # 1. Clear out old selection data from memory
             self.__selectedPackage = []
             
-            # 2. Call the update function to rescan your zip packages folder
-            self.update()
-            
-            # 3. Tell the UI panel to drop the blue highlight and unlock buttons
-            self.notify_all(self, events=['<<PACKAGE UNSELECTED>>', '<<END_ACTION>>', '<<ENABLE_ALL>>'])
+            # 2. Notify selection change
+            self.notify_all(self, events=['<<PACKAGE UNSELECTED>>'])
+            self.logger.info("--[Done]------------------")
         else:
             # If user clicked Cancel, just unlock the app interface
-            self.notify_all(self, events=['<<END_ACTION>>', '<<ENABLE_ALL>>'])
-        self.baseModel.packagedTablesModel
+            pass
+
+        self.notify_all(self, events=['<<END_ACTION>>', '<<ENABLE_ALL>>'])
+        self.update()
 
     def backupPackages(self, viewer, backup_path):
         self.notify_all(self, events=['<<DISABLE_ALL>>', '<<BEGIN_ACTION>>'])  # update listeners

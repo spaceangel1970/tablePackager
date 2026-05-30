@@ -139,7 +139,8 @@ class PackageEditorModel(Observable):
                 rel_path = file.relative_to(src_dir)
                 dst_field = f"UltraDMD/{ultra_dmd_dir}"
                 if str(rel_path.parent) != '.':
-                    dst_field += f"/{str(rel_path.parent).replace('\\', '/')}"
+                    parent_path = str(rel_path.parent).replace('\\', '/')
+                    dst_field += f"/{parent_path}"
                 self.package.add_file(str(file), dst_field)
 
     def scan_pup_for_table(self):
