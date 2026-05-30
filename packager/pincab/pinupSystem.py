@@ -25,6 +25,8 @@ class PinUpSystem:
     def get_product_path(self, product: str) -> str:
         if product == 'visual pinball':
             return 'Visual Pinball X'
+        if product == 'future pinball':
+            return 'Future Pinball'
         return 'Visual Pinball X'
 
     def extract_file(self, package: Package, product: str, media, dataPath, extension='', search_name=None) -> None:

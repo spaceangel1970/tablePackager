@@ -20,6 +20,7 @@ from packager.model.packageEditorModel import PackageEditorModel
 from packager.model.packagedTablesModel import *
 from packager.model.search_model import *
 from packager.pincab.pupScanner import PupScanner
+from packager.pincab.futurePinball import FuturePinball
 
 class BaseModel:
     def __init__(self, logger: logging, version: str, package_version: str) -> None:
@@ -46,6 +47,7 @@ class BaseModel:
         self.__pinballX = PinballX(self.logger, self)
         self.__ultraDMD = UltraDMD(self.logger, self)
         self.__flexDMD = FlexDMD(self.logger, self)
+        self.__futurePinball = FuturePinball(self.logger, self)
         self.__database = TableDatabase(self.logger, self)
         self.__pupScanner = PupScanner(self.logger, self)
 
@@ -130,6 +132,10 @@ class BaseModel:
         return self.__visualPinball
 
     @property
+    def futurePinball(self):
+        return self.__futurePinball
+
+    @property
     def vpinMame(self):
         return self.__vpinMame
 
@@ -190,4 +196,3 @@ class BaseModel:
         if added:
             package_obj.save()
         return added
-

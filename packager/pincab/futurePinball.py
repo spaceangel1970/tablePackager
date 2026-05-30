@@ -43,7 +43,7 @@ class FuturePinball:
 
         if table_file.exists():
             self.logger.info(f"  + {table_file.name}")
-            package.add_file('futurPinball', 'Tables', table_file)
+            package.add_file(table_file, 'futurPinball/Tables')
         else:
             self.logger.debug(f"  - {package.name}.fpt not found in {tables_dir}")
 
@@ -63,7 +63,11 @@ class FuturePinball:
         Removes Future Pinball assets from the system for a given table.
         """
         self.logger.info("* Delete Future Pinball files")
-        if not self.future_pinball_path or not os.path.exists(self.future_pinball_path):
+        fp_path = self.future_pinball_path
+        if not fp_path or not os.path.exists(fp_path):
             return
 
-        pass
+        table_file = Path(fp_path) / "Tables" / f"{table_name}.fpt"
+        if table_file.exists():
+            self.logger.info(f"- remove {table_file} file")
+            os.remove(table_file)

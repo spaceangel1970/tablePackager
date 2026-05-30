@@ -122,9 +122,9 @@ class InstalledTablesModel(Observable):
                 if context['pinballX'].get():
                     self.baseModel.pinballX.extract(table['name'], package)
                 if context['futurPinball'].get():
-                    self.logger.warning("extract from futurPinball is not yet implemented")
+                    self.baseModel.futurePinball.extract(package)
                     if context['pinupSystem'].get():
-                        self.logger.warning("extract from pinupSystem is not yet implemented")
+                        self.baseModel.pinupSystem.extract(package, 'future pinball')
                 package.save()
                 package.pack()  # zip package
 
