@@ -78,6 +78,7 @@ setup(name='tablePackager',
                               'data': {'Shortcut': shortcut_table},
                               'install_icon' : 'packager/images/tablePackager_128x128.ico',
                               'upgrade_code': '{006d3301-d595-49e5-81d0-4a906aa48bb8}', # required for msi upgrade
+                              'all_users': True,
                              },
       },
       url='https://github.com/Hagrou/tablePackager',
