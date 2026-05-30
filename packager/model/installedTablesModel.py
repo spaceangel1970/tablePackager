@@ -26,26 +26,43 @@ class InstalledTablesModel(Observable):
     def tables(self):
         return self.__tables
 
-    def update(self):
-        # read Visual Pinball Tables
+    def update(self, app_choices=None):
         self.__tables = []
         
-        # Turn the base directory string into a resilient Path object
-        base_path = Path(self.baseModel.visual_pinball_path)
-        
-        # Try finding uppercase 'Tables', fallback to lowercase 'tables'
-        tables_path = base_path / "Tables"
-        if not tables_path.exists():
-            tables_path = base_path / "tables"
+        # Determine platforms to scan. Defaults match UI start-up state (VP=True, FP=False).
+        scan_visual = app_choices['visual_pinball'].get() if app_choices else True
+        scan_future = app_choices['futurPinball'].get() if app_choices else False
 
-        # Scan the directory if it is valid
-        if tables_path.exists():
-            for vpx_file in tables_path.glob('**/*.vpx'):
-                self.__tables.append({'type': 'vpx', 'name': vpx_file.stem})
-            for vpt_file in tables_path.glob('**/*.vpt'):
-                self.__tables.append({'type': 'vpt', 'name': vpt_file.stem})
-        else:
-            self.logger.error(f"Target tables folder missing at: {tables_path}")
+        if scan_visual:
+            self.logger.info("Scanning for Visual Pinball tables...")
+            base_path = Path(self.baseModel.visual_pinball_path)
+            
+            tables_path = base_path / "Tables"
+            if not tables_path.exists():
+                tables_path = base_path / "tables" # Fallback to lowercase
+
+            if tables_path.exists():
+                for vpx_file in tables_path.glob('**/*.vpx'):
+                    self.__tables.append({'type': 'vpx', 'name': vpx_file.stem})
+                for vpt_file in tables_path.glob('**/*.vpt'):
+                    self.__tables.append({'type': 'vpt', 'name': vpt_file.stem})
+            else:
+                self.logger.error(f"Target Visual Pinball tables folder missing at: {tables_path}")
+
+        if scan_future:
+            self.logger.info("Scanning for Future Pinball tables...")
+            fp_path = self.baseModel.config.get('future_pinball_path')
+            if fp_path:
+                fp_base_path = Path(fp_path)
+                fp_tables_path = fp_base_path / "Tables"
+
+                if fp_tables_path.exists():
+                    for fpt_file in fp_tables_path.glob('**/*.fpt'):
+                        self.__tables.append({'type': 'fpt', 'name': fpt_file.stem})
+                else:
+                    self.logger.error(f"Target Future Pinball tables folder missing at: {fp_tables_path}")
+            else:
+                self.logger.warning('Future Pinball path not configured, skipping scan.')
 
         self.__tables.sort(key=lambda table: table['name'].upper())
         self.notify_all(self, events=['<<UPDATE TABLES>>'], tables=self.__tables)  # update listeners

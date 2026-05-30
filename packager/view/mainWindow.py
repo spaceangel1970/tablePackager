@@ -59,11 +59,13 @@ class MainWindow(Observer, Observable):
         self.__extractAppChoice['pinballX'].set(False)
         self.__extractFrame = Frame(self.__window, width=2, relief=GROOVE, borderwidth=4)
         self.__cbExVisualPinball = Checkbutton(self.__extractFrame, variable=self.__extractAppChoice['visual_pinball'],
-                                               onvalue=True, offvalue=False, text='Visual Pinball')
+                                               onvalue=True, offvalue=False, text='Visual Pinball',
+                                               command=self.on_extraction_app_choice_changed)
         self.__cbExVisualPinball.grid(column=0, row=0, sticky='NW')
 
         self.__cbExfuturPinball = Checkbutton(self.__extractFrame, variable=self.__extractAppChoice['futurPinball'],
-                                              onvalue=True, offvalue=False, text='Future Pinball')
+                                              onvalue=True, offvalue=False, text='Future Pinball',
+                                              command=self.on_extraction_app_choice_changed)
         self.__cbExfuturPinball.grid(column=0, row=1, sticky='NW')
         self.__cbExfuturPinballToolTip = CreateToolTip(self.__cbExfuturPinball, 'Extract Future Pinball table and media')
         self.__cbExPinupSystem = Checkbutton(self.__extractFrame, variable=self.__extractAppChoice['pinupSystem'],
@@ -160,6 +162,9 @@ class MainWindow(Observer, Observable):
 
     def extract_on_click(self):
         self.__baseModel.installedTablesModel.extract_tables(self.__extractAppChoice)
+
+    def on_extraction_app_choice_changed(self):
+        self.__baseModel.installedTablesModel.update(self.__extractAppChoice)
 
     def install_on_click(self):
         self.__baseModel.packagedTablesModel.deployPackage(self.__installAppChoice)
