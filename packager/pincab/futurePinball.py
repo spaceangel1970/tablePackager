@@ -177,11 +177,6 @@ class FuturePinball:
             if not pup_folder:
                 pup_folder = package.name
                 self.logger.info(f"    + No script folder found, defaulting to: {pup_folder}")
-
-            # --- DYNAMIC STRUCTURAL ADAPTER INJECTION ---
-            # Initialize info metadata fields that UI preview components often depend on
-            package.set_field('future pinball/info/romName', [pup_folder])
-            package.set_field('future pinball/info/tableFile', table_filename)
                 
             # Resolve PinUpSystem path from model or config
             pinup_path = getattr(self.baseModel, 'pinupSystem_path', '') or self.baseModel.config.get('pinup_system_path', '')
@@ -202,9 +197,10 @@ class FuturePinball:
                         for file_path in pup_path.glob('**/*'):
                             if file_path.is_file():
                                 rel_path = file_path.relative_to(pup_path)
-                                # Group files under the pup_folder in the manifest (matches Visual Pinball pattern)
-                                package.add_file(file_path, f"future pinball/PUPVideos/{pup_folder}", 
-                                                 dst_file=str(rel_path).replace('\\', '/'))
+                                # Use the base category as the manifest key to ensure it appears in the Preview UI
+                                # Prepend the pup_folder to the destination file path to preserve the directory structure
+                                package.add_file(file_path, "future pinball/PUPVideos", 
+                                                 dst_file=f"{pup_folder}/" + str(rel_path).replace('\\', '/'))
                         break
                     else:
                         self.logger.info(f"    - Folder exists but is empty.")
