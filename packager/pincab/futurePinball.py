@@ -1,8 +1,15 @@
 import os
 import shutil
+import re
+import configparser
 from pathlib import Path
 from packager.tools.toolbox import *
 from packager.model.package import Package
+
+try:
+    import olefile
+except ImportError:
+    olefile = None
 
 
 class FuturePinball:
@@ -27,25 +34,184 @@ class FuturePinball:
         except KeyError:
             return ''
 
+    def is_pup_pack_empty(self, pup_path: str) -> bool:
+        """Checks if a PUP pack folder is effectively empty or missing."""
+        if not os.path.exists(pup_path):
+            return True
+        for root, dirs, files in os.walk(pup_path):
+            if files: 
+                return False
+        return True
+
+    def extract_pup_folder_name(self, fpt_file: Path) -> str:
+        """
+        Scans the Future Pinball (.fpt) binary/text content for the 
+        uPPack_folder or PuPPack_folder variable definition in the script.
+        Uses olefile to extract the script from the OLE stream for accuracy.
+        """
+        if not fpt_file.exists():
+            return None
+
+        # Try OLE extraction first (the standard way for Future Pinball .fpt files)
+        if olefile:
+            try:
+                if olefile.isOleFile(str(fpt_file)):
+                    with olefile.OleFileIO(str(fpt_file)) as ole:
+                        # List all streams to find the script stream (can be under subfolders)
+                        for stream in ole.listdir():
+                            stream_path = "/".join(stream)
+                            if "script" in stream_path.lower():
+                                self.logger.info(f"    + Extracting script from OLE stream: {stream_path}")
+                                try:
+                                    script_data = ole.openstream(stream_path).read()
+                                    # Future Pinball scripts are encoded in UTF-16LE
+                                    content = script_data.decode('utf-16-le', errors='ignore')
+
+                                    # Robust regex for uPPack_folder or PuPPack_folder (handles tabs and spaces)
+                                    pattern = r"(?i)[uP]*PPack_folder\s*=\s*[\"']([^\"']+)[\"']"
+                                    match = re.search(pattern, content)
+
+                                    if match:
+                                        folder_name = match.group(1).strip()
+                                        self.logger.info(f"    > Found PUP folder in OLE script: {folder_name}")
+                                        return folder_name
+                                except Exception as e:
+                                    self.logger.debug(f"    ! Failed to read OLE stream {stream_path}: {e}")
+            except Exception as e:
+                self.logger.debug(f"    ! OLE script extraction failed: {e}")
+        else:
+            self.logger.warning("    ! 'olefile' module not found. Run 'pip install olefile' for reliable script extraction.")
+
+        try:
+            with open(fpt_file, 'rb') as f:
+                binary_content = f.read()
+            
+            self.logger.info(f"    + Scanning table script ({len(binary_content)} bytes): {fpt_file.name}")
+            
+            # Regex to find: uPPack_folder = "FolderName"
+            # Handles variations like uPPack_folder or PuPPack_folder and optional whitespace/tabs
+            pattern = r"(?i)[uP]*PPack_folder\s*=\s*[\"']([^\"']+)[\"']"
+
+            # Attempt 1: Standard latin-1 (covers ASCII/UTF-8 embedded in binary)
+            content = binary_content.decode('latin-1', errors='ignore')
+            match = re.search(pattern, content)
+            
+            if not match:
+                # Attempt 2: UTF-16LE (Future Pinball often stores script streams as Wide Characters)
+                try:
+                    content_utf16 = binary_content.decode('utf-16le', errors='ignore')
+                    match = re.search(pattern, content_utf16)
+                except Exception:
+                    pass
+
+            if not match and len(binary_content) > 1:
+                # Attempt 3: UTF-16LE offset by 1 (binary streams aren't always 2-byte aligned)
+                try:
+                    content_utf16_off = binary_content[1:].decode('utf-16le', errors='ignore')
+                    match = re.search(pattern, content_utf16_off)
+                except Exception:
+                    pass
+
+            if match:
+                folder_name = match.group(1).strip()
+                self.logger.info(f"    > Found uPPack_folder in script: {folder_name}")
+                return folder_name
+        except Exception as e:
+            self.logger.error(f"Failed to scan Future Pinball script for PUP folder: {e}")
+            
+        return None
+
     def extract(self, package: Package) -> None:
         """
         Extracts Future Pinball assets into the package.
         """
-        self.logger.info("* Future Pinball files extraction")
+        self.logger.info("* Starting Future Pinball assets extraction")
         fp_path = self.future_pinball_path
+        self.logger.info(f"  > Configured Future Pinball Path: {fp_path}")
+
+        # Load override mapping from FP_mapping.ini
+        mapping = {}
+        mapping_file = Path("FP_mapping.ini")
+        if mapping_file.exists():
+            try:
+                config = configparser.ConfigParser()
+                config.read(mapping_file)
+                # Flexible matching: apply mapping if section name is part of the package name
+                for section in config.sections():
+                    if section.lower() in package.name.lower():
+                        mapping = config[section]
+                        self.logger.info(f"  + Applied mapping section [{section}] to '{package.name}' from FP_mapping.ini")
+                        break
+            except Exception as e:
+                self.logger.debug(f"  ! Failed to read FP_mapping.ini: {e}")
+
         if not fp_path or not os.path.exists(fp_path):
-            self.logger.warning('Future Pinball path not found or not configured')
+            self.logger.warning(f"  ! Future Pinball path not found or not configured: {fp_path}")
             return
 
         # Tables location: Future Pinball typically stores tables in a 'Tables' subfolder
         tables_dir = Path(fp_path) / "Tables"
-        table_file = tables_dir / f"{package.name}.fpt"
+        if 'TableFile' in mapping:
+            table_filename = mapping['TableFile']
+            self.logger.info(f"  + Table file identified via mapping: {table_filename}")
+        else:
+            table_filename = f"{package.name}.fpt"
+
+        table_file = tables_dir / table_filename
 
         if table_file.exists():
-            self.logger.info(f"  + {table_file.name}")
-            package.add_file(table_file, 'futurPinball/Tables')
+            self.logger.info(f"  + Found Table: {table_file.name}")
+            package.add_file(table_file, 'future pinball/Tables')
+
+            # Ensure 'future pinball' key exists in manifest if we found a table
+            if hasattr(package, 'manifest') and package.manifest is not None:
+                if "future pinball" not in package.manifest.content:
+                    package.manifest.content["future pinball"] = {}
+
+            # Determine the correct PUP Pack folder
+            pup_folder = mapping.get('PupPack')
+            if pup_folder:
+                self.logger.info(f"    + Using mapped PUP pack override: {pup_folder} (skipping script scan)")
+            else:
+                # Only scan the script if no mapping exists
+                pup_folder = self.extract_pup_folder_name(table_file)
+                if pup_folder:
+                    self.logger.info(f"    + Script-defined PUP folder: {pup_folder}")
+
+            if not pup_folder:
+                pup_folder = package.name
+                self.logger.info(f"    + No script folder found, defaulting to: {pup_folder}")
+                
+            # Resolve PinUpSystem path from model or config
+            pinup_path = getattr(self.baseModel, 'pinupSystem_path', '') or self.baseModel.config.get('pinup_system_path', '')
+            if pinup_path:
+                self.logger.info(f"    > Resolved PinUpSystem path: {pinup_path}")
+
+            # Check both Future Pinball local PUPVideos and the central PinUpSystem PUPVideos
+            pup_locations = [
+                Path(fp_path) / "PUPVideos" / pup_folder,
+                Path(pinup_path) / "PUPVideos" / pup_folder
+            ]
+
+            for pup_path in [p for p in pup_locations if p]:
+                self.logger.info(f"    > Checking: {pup_path}")
+                if pup_path.exists() and pup_path.is_dir():
+                    if not self.is_pup_pack_empty(str(pup_path)):
+                        self.logger.info(f"    + Valid PUP Pack found! Archiving...")
+                        for file_path in pup_path.glob('**/*'):
+                            if file_path.is_file():
+                                rel_path = file_path.relative_to(pup_path)
+                                # Group files under the base category manifest key for UI visibility
+                                # Preserve the PUP Pack folder name in the destination path
+                                package.add_file(file_path, "future pinball/PUPVideos", 
+                                                 dst_file=f"{pup_folder}/" + str(rel_path).replace('\\', '/'))
+                        break
+                    else:
+                        self.logger.info(f"    - Folder exists but is empty.")
+            else:
+                self.logger.info(f"    - No PUP pack found after checking multiple locations for: {pup_folder}")
         else:
-            self.logger.debug(f"  - {package.name}.fpt not found in {tables_dir}")
+            self.logger.warning(f"  ! Table file NOT found: {table_file}")
 
     def deploy(self, package: Package) -> None:
         """

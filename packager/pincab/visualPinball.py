@@ -137,7 +137,11 @@ class VisualPinball:
         
         if not self.is_pup_pack_empty(pup_pack_path):
             self.logger.info(f"+ Found valid PUP pack: {package.name}")
-            package.add_folder(pup_pack_path, 'visual pinball/PUPVideos')
+            for file_path in Path(pup_pack_path).glob('**/*'):
+                if file_path.is_file():
+                    rel_path = file_path.relative_to(Path(pup_pack_path))
+                    package.add_file(file_path, f"visual pinball/PUPVideos/{package.name}", 
+                                     dst_file=str(rel_path).replace('\\', '/'))
         else:
             self.logger.info(f"- Ignoring PUP pack: {package.name} (Folder is empty or missing)")
 
