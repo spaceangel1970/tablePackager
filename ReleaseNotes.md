@@ -2,6 +2,11 @@
 
 ## What's New in Version 1.2.1
 
+/!\ You must uninstall current version before install a new one /!\
+### What's New
+
+- Added Future Pinball Integration
+- Added Future Pinball Pup-Pack Search
 
 ### Bug Fixes
 - Fixed permission error when installing from .msi installer
