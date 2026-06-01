@@ -25,10 +25,10 @@ class Search_Model(Observable):
     def pinball_machine(self):
         return self.__pinball_machine
 
-    def update(self, contains:str='', only_with_vpx:bool=False) -> None:
+    def update(self, contains:str='', **kwargs) -> None:
         # Debug log to verify what the search UI is requesting
-        self.logger.info(f"Search Update triggered: term='{contains}', only_vpx={only_with_vpx}")
-        self.__pincab = []
+        self.logger.info(f"Search Update triggered: term='{contains}'")
+        self.__pinball_machine = []
         
         search_term = contains.lower().strip()
         
@@ -39,15 +39,11 @@ class Search_Model(Observable):
             if search_term and (search_term not in key.lower() and search_term not in table_display_name):
                 continue
             
-            # Filter for tables with URLs if requested (the VPS CSV currently has empty Urls lists)
-            if only_with_vpx and not pincab.get('Urls'):
-                continue
-
-            self.__pincab.append(key)
+            self.__pinball_machine.append(key)
         
         self.notify_all(self, events=['<<UPDATE TABLES>>'],
-                        pinball_machines=self.__pincab,
-                        nb_result=len(self.__pincab),
+                        pinball_machines=self.__pinball_machine,
+                        nb_result=len(self.__pinball_machine),
                         total=len(self.baseModel.database.data))
 
     def select_pinball_machine(self, pinball_machine:dict) -> None:

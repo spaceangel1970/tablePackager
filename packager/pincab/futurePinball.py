@@ -244,3 +244,9 @@ class FuturePinball:
         if table_file.exists():
             self.logger.info(f"- remove {table_file} file")
             os.remove(table_file)
+
+        # Also clean up BAM configuration if it exists
+        cfg_file = Path(fp_path) / "BAM" / "cfg" / f"{table_name}.cfg"
+        if cfg_file.exists():
+            self.logger.info(f"- remove BAM configuration file: {cfg_file.name}")
+            os.remove(cfg_file)

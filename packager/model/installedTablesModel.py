@@ -201,7 +201,8 @@ class InstalledTablesModel(Observable):
                 self.baseModel.flexDMD.delete(table['name'])  # use package.manifest if exists
             self.baseModel.pinballX.delete(table['name'])
             self.baseModel.pinupSystem.delete(table['name'], 'visual pinball')
-            self.logger.warning("delete on futurPinball is not yet implemented")
+            self.baseModel.pinupSystem.delete(table['name'], 'future pinball')
+            self.baseModel.futurePinball.delete(table['name'])
             if isPackage:
                 os.unlink(self.baseModel.installed_path + '/' + manifest.filename)
 
