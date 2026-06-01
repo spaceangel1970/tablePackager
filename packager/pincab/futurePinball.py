@@ -234,11 +234,38 @@ class FuturePinball:
         Deploys Future Pinball assets from a package to the system.
         """
         self.logger.info("* Deploy Future Pinball files")
-        if not self.future_pinball_path or not os.path.exists(self.future_pinball_path):
+        fp_path = self.future_pinball_path
+        if not fp_path or not os.path.exists(fp_path):
             self.logger.warning('Future Pinball path not found or not configured')
             return
 
-        pass
+        source_base = os.path.normpath(os.path.join(self.baseModel.tmp_path, package.name, "future pinball"))
+        if not os.path.exists(source_base):
+            self.logger.info("- No Future Pinball assets found in package.")
+            return
+
+        # 1. Deploy Tables (.fpt, .vbs, .res, etc.)
+        tables_src = os.path.join(source_base, "Tables")
+        if os.path.exists(tables_src):
+            self.logger.info(f"+ Deploying Tables to {os.path.join(fp_path, 'Tables')}")
+            copytree(self.logger, tables_src, os.path.join(fp_path, "Tables"))
+
+        # 2. Deploy BAM (includes cfg subfolder)
+        bam_src = os.path.join(source_base, "BAM")
+        if os.path.exists(bam_src):
+            self.logger.info(f"+ Deploying BAM assets to {os.path.join(fp_path, 'BAM')}")
+            copytree(self.logger, bam_src, os.path.join(fp_path, "BAM"))
+
+        # 3. Deploy PUPVideos
+        pup_src = os.path.join(source_base, "PUPVideos")
+        if os.path.exists(pup_src):
+            pinup_path = self.baseModel.pinupSystem_path
+            if pinup_path:
+                dest_pup = os.path.join(pinup_path, "PUPVideos")
+                self.logger.info(f"+ Deploying PUPVideos to {dest_pup}")
+                copytree(self.logger, pup_src, dest_pup)
+            else:
+                self.logger.warning('PinUp System path not found, skipping PUPVideos deployment.')
 
     def delete(self, table_name: str) -> None:
         """

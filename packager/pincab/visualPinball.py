@@ -234,6 +234,15 @@ class VisualPinball:
             ("tables", os.path.join(self.visual_pinball_path, "tables")),
             ("Music", os.path.join(self.visual_pinball_path, "Music"))
         ]
+        
+        # Add PUPVideos mapping to PinUpSystem if present in package
+        pup_src_dir = os.path.join(source_base, "PUPVideos")
+        if os.path.exists(pup_src_dir):
+            pinup_path = self.baseModel.pinupSystem_path
+            if pinup_path:
+                mappings.append(("PUPVideos", os.path.join(pinup_path, "PUPVideos")))
+            else:
+                self.logger.warning('PinUp System path not found, skipping PUPVideos deployment.')
 
         # 2. Perform Merged Copy (Individual file handling avoids folder-level overwrite)
         for src_sub, dest_dir in mappings:

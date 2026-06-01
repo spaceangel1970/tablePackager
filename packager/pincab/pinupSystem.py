@@ -118,23 +118,33 @@ class PinUpSystem:
             raise ValueError('Path not found (%s)' % package_base_path)
 
         # 1. --- STANDARD POPMEDIA FRONTEND ASSETS ---
-        copytree(self.logger, package_base_path + "/media/Audio", self.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/Audio')
-        copytree(self.logger, package_base_path + "/media/AudioLaunch", self.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/AudioLaunch')
-        copytree(self.logger, package_base_path + "/media/BackGlass", self.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/BackGlass')
-        copytree(self.logger, package_base_path + "/media/DMD", self.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/DMD')
-        copytree(self.logger, package_base_path + "/media/DMDVideos", self.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/DMDVideos')
-        copytree(self.logger, package_base_path + "/media/HighScores", self.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/HighScores')
-        copytree(self.logger, package_base_path + "/media/Instruction Cards", self.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/GameHelp')
-        copytree(self.logger, package_base_path + "/media/PlayField", self.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/PlayField')
-        copytree(self.logger, package_base_path + "/media/Topper", self.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/Topper')
-        copytree(self.logger, package_base_path + "/media/TopperVideos", self.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/Topper')
-        copytree(self.logger, package_base_path + "/media/Wheel", self.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/Wheel')
-        copytree(self.logger, package_base_path + "/media/ScreenGrabs", self.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/ScreenGrabs')
-        copytree(self.logger, package_base_path + "/media/TableVideos", self.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/TableVideos')
-        copytree(self.logger, package_base_path + "/media/Flyers Inside", self.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/GameInfo')
-        copytree(self.logger, package_base_path + "/media/Flyers Front", self.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/GameInfo')
-        copytree(self.logger, package_base_path + "/media/Flyers Back", self.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/GameInfo')
-        copytree(self.logger, package_base_path + "/media/Loading", self.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/Loading')
+        media_mappings = [
+            ("Audio", "Audio"),
+            ("AudioLaunch", "AudioLaunch"),
+            ("BackGlass", "BackGlass"),
+            ("DMD", "DMD"),
+            ("DMDVideos", "DMDVideos"),
+            ("HighScores", "HighScores"),
+            ("Instruction Cards", "GameHelp"),
+            ("PlayField", "PlayField"),
+            ("Topper", "Topper"),
+            ("TopperVideos", "Topper"),
+            ("Wheel", "Wheel"),
+            ("ScreenGrabs", "ScreenGrabs"),
+            ("TableVideos", "TableVideos"),
+            ("Flyers Inside", "GameInfo"),
+            ("Flyers Front", "GameInfo"),
+            ("Flyers Back", "GameInfo"),
+            ("Loading", "Loading")
+        ]
+
+        pop_media_base = os.path.join(self.pinupSystem_path, "POPMedia", self.get_product_path(product))
+
+        for src_sub, dest_sub in media_mappings:
+            src_path = os.path.join(package_base_path, "media", src_sub)
+            if os.path.exists(src_path):
+                dest_path = os.path.join(pop_media_base, dest_sub)
+                copytree(self.logger, src_path, dest_path)
 
         # 2. --- FIXED CODE: SAFE SURGICAL MERGE FOR PUP VIDEOS PACKS ---
         pup_stage_dir = os.path.join(package_base_path, "media", "PuP")

@@ -150,58 +150,34 @@ class PinballX:
             self.logger.warning('PinballX not found (%s)' % self.pinballX_path)
             return
 
-        if not Path(self.baseModel.tmp_path + "/" + package.name).exists():
-            raise ValueError('Path not found (%s)' % self.baseModel.tmp_path + "/" + package.name)
+        package_base_path = os.path.join(self.baseModel.tmp_path, package.name)
+        if not os.path.exists(package_base_path):
+            raise ValueError('Path not found (%s)' % package_base_path)
 
-        copytree(self.logger,
-                 self.baseModel.tmp_path + "/" + package.name + "/Media/Flyers Back",
-                 self.baseModel.pinballX_path + "/Media/Flyer Images/Back/")
-        copytree(self.logger,
-                 self.baseModel.tmp_path + "/" + package.name + "/Media/Flyers Inside",
-                 self.baseModel.pinballX_path + "/Media/Flyer Images/Inside1/")
-        copytree(self.logger,
-                 self.baseModel.tmp_path + "/" + package.name + "/Media/Flyers Front",
-                 self.baseModel.pinballX_path + "/Media/Flyer Images/Front/")
+        media_mappings = [
+            ("Flyers Back", "Media/Flyer Images/Back/"),
+            ("Flyers Inside", "Media/Flyer Images/Inside1/"),
+            ("Flyers Front", "Media/Flyer Images/Front/"),
+            ("Instruction Cards", "Media/Instruction Cards/"),
+            ("HighScores", "High Scores/Visual Pinball/"),
+            ("Wheel", "Media/Visual Pinball/Wheel Images/"),
+            ("Audio", "Media/Visual Pinball/Table Audio/"),
+            ("AudioLaunch", "Media/Visual Pinball/Launch Audio/"),
+            ("BackGlass", "Media/Visual Pinball/Backglass Images/"),
+            ("DMD", "Media/Visual Pinball/DMD Images/"),
+            ("DMDVideos", "Media/Visual Pinball/DMD Videos/"),
+            ("PlayField", "Media/Visual Pinball/Table Images"),
+            ("Topper", "Media/Visual Pinball/Topper Images"),
+            ("TopperVideos", "Media/Visual Pinball/Topper Videos"),
+            ("TableVideos", "Media/Visual Pinball/Table Videos"),
+            ("ScreenGrabs", "Media/Visual Pinball/Screen Grabs"),
+        ]
 
-        copytree(self.logger,
-                 self.baseModel.tmp_path + "/" + package.name + "/Media/Instruction Cards",
-                 self.baseModel.pinballX_path + "/Media/Instruction Cards/")
-        copytree(self.logger,
-                 self.baseModel.tmp_path + "/" + package.name + "/Media/HighScores",
-                 self.baseModel.pinballX_path + "/High Scores/Visual Pinball/")
-        copytree(self.logger,
-                 self.baseModel.tmp_path + "/" + package.name + "/Media/Wheel",
-                 self.baseModel.pinballX_path + "/Media/Visual Pinball/Wheel Images/")
-        copytree(self.logger,
-                 self.baseModel.tmp_path + "/" + package.name + "/Media/Audio",
-                 self.baseModel.pinballX_path + "/Media/Visual Pinball/Table Audio/")
-        copytree(self.logger,
-                 self.baseModel.tmp_path + "/" + package.name + "/Media/AudioLaunch",
-                 self.baseModel.pinballX_path + "/Media/Visual Pinball/Launch Audio/")
-        copytree(self.logger,
-                 self.baseModel.tmp_path + "/" + package.name + "/Media/BackGlass",
-                 self.baseModel.pinballX_path + "/Media/Visual Pinball/Backglass Images/")
-        copytree(self.logger,
-                 self.baseModel.tmp_path + "/" + package.name + "/Media/DMD",
-                 self.baseModel.pinballX_path + "/Media/Visual Pinball/DMD Images/")
-        copytree(self.logger,
-                 self.baseModel.tmp_path + "/" + package.name + "/Media/DMDVideos",
-                 self.baseModel.pinballX_path + "/Media/Visual Pinball/DMD Videos/")
-        copytree(self.logger,
-                 self.baseModel.tmp_path + "/" + package.name + "/Media/PlayField",
-                 self.baseModel.pinballX_path + "/Media/Visual Pinball/Table Images")
-        copytree(self.logger,
-                 self.baseModel.tmp_path + "/" + package.name + "/Media/Topper",
-                 self.baseModel.pinballX_path + "/Media/Visual Pinball/Topper Images")
-        copytree(self.logger,
-                 self.baseModel.tmp_path + "/" + package.name + "/Media/TopperVideos",
-                 self.baseModel.pinballX_path + "/Media/Visual Pinball/Topper Videos")
-        copytree(self.logger,
-                 self.baseModel.tmp_path + "/" + package.name + "/Media/TableVideos",
-                 self.baseModel.pinballX_path + "/Media/Visual Pinball/Table Videos")
-        copytree(self.logger,
-                 self.baseModel.tmp_path + "/" + package.name + "/Media/ScreenGrabs",
-                 self.baseModel.pinballX_path + "/Media/Visual Pinball/Screen Grabs")
+        for src_sub, dest_sub in media_mappings:
+            src_path = os.path.join(package_base_path, "media", src_sub)
+            if os.path.exists(src_path):
+                dest_path = os.path.join(self.pinballX_path, dest_sub)
+                copytree(self.logger, src_path, dest_path)
 
     def delete(self, table_name: str) -> None:
         if not os.path.exists(self.pinballX_path):

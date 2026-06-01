@@ -82,11 +82,11 @@ class PackagedTablesModel(Observable):
                     self.baseModel.flexDMD.deploy(package)
                 if context['pinballX'].get():
                     self.baseModel.pinballX.deploy(package)
-
                 if context['futurPinball'].get():
-                    self.logger.warning("deploy to futur Pinball is not yet implemented")
+                    self.baseModel.futurePinball.deploy(package)
                 if context['pinupSystem'].get():
-                    self.baseModel.pinupSystem.deploy(package, 'visual pinball')
+                    product = 'future pinball' if context['futurPinball'].get() else 'visual pinball'
+                    self.baseModel.pinupSystem.deploy(package, product)
 
                 # --- NEW: Export deployment log to the Application directory ---
                 log_src = os.path.normpath(os.path.join(self.baseModel.tmp_path, packageInfo['name'], 'logs', 'Log.txt'))

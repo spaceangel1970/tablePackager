@@ -203,8 +203,13 @@ class InstalledTablesModel(Observable):
             self.baseModel.pinupSystem.delete(table['name'], 'visual pinball')
             self.baseModel.pinupSystem.delete(table['name'], 'future pinball')
             self.baseModel.futurePinball.delete(table['name'])
-            if isPackage:
-                os.unlink(self.baseModel.installed_path + '/' + manifest.filename)
+
+            # Ensure the manifest file is cleaned up from the 'installed' directory
+            manifest_filename = table['name'] + '.manifest.json'
+            manifest_path = os.path.join(self.baseModel.installed_path, manifest_filename)
+            if os.path.exists(manifest_path):
+                self.logger.info(f"- removing manifest file: {manifest_filename}")
+                os.unlink(manifest_path)
 
         return True
 
