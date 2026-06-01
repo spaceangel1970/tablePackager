@@ -218,6 +218,15 @@ class FuturePinball:
                 self.logger.info(f"* Bundling session log: {log_path}")
                 package.add_file(log_path, 'future pinball/logs', dst_file='Log.txt')
 
+        # Cleanup empty folders in the staging area for a cleaner ZIP
+        package_root = Path(package.directory) / package.name
+        if package_root.exists():
+            for root, dirs, files in os.walk(package_root, topdown=False):
+                for name in dirs:
+                    dir_path = Path(root) / name
+                    if dir_path.exists() and not any(dir_path.iterdir()):
+                        dir_path.rmdir()
+
         self.logger.info("--------------------------------------------------")
 
     def deploy(self, package: Package) -> None:
