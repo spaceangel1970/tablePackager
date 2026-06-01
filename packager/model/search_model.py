@@ -26,6 +26,8 @@ class Search_Model(Observable):
         return self.__pinball_machine
 
     def update(self, contains:str='', only_with_vpx:bool=False) -> None:
+        # Debug log to verify what the search UI is requesting
+        self.logger.info(f"Search Update triggered: term='{contains}', only_vpx={only_with_vpx}")
         self.__pincab = []
         
         search_term = contains.lower().strip()

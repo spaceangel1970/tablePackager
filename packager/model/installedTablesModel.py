@@ -13,6 +13,8 @@ class InstalledTablesModel(Observable):
         self.__baseModel = baseModel
         self.__tables = []
         self.__selectedTable = []
+        self.__scan_visual = True
+        self.__scan_future = False
 
     @property
     def baseModel(self):
@@ -29,11 +31,11 @@ class InstalledTablesModel(Observable):
     def update(self, app_choices=None):
         self.__tables = []
         
-        # Determine platforms to scan. Defaults match UI start-up state (VP=True, FP=False).
-        scan_visual = app_choices['visual_pinball'].get() if app_choices else True
-        scan_future = app_choices['futurPinball'].get() if app_choices else False
+        if app_choices:
+            self.__scan_visual = bool(app_choices['visual_pinball'].get())
+            self.__scan_future = bool(app_choices['futurPinball'].get())
 
-        if scan_visual:
+        if self.__scan_visual:
             self.logger.info("Scanning for Visual Pinball tables...")
             base_path = Path(self.baseModel.visual_pinball_path)
             
@@ -49,7 +51,7 @@ class InstalledTablesModel(Observable):
             else:
                 self.logger.error(f"Target Visual Pinball tables folder missing at: {tables_path}")
 
-        if scan_future:
+        if self.__scan_future:
             self.logger.info("Scanning for Future Pinball tables...")
             fp_path = self.baseModel.config.get('future_pinball_path')
             if fp_path:
