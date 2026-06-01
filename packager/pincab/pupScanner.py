@@ -35,14 +35,14 @@ class PupScanner:
         results = []
 
         pup_pattern = re.compile(r'(?i)pup[- ]?pack')
-        with open(db_path, newline='', encoding='utf-8') as csvfile:
-            reader = csv.reader(csvfile)
-            header = next(reader, None)
+        with open(db_path, newline='', encoding='utf-8-sig') as csvfile:
+            reader = csv.DictReader(csvfile)
+            field_map = {k.strip().lower().replace(' ', ''): k for k in reader.fieldnames} if reader.fieldnames else {}
             for row in reader:
-                try:
-                    game_name = row[1]
-                except IndexError:
-                    continue
+                # Check for GameName using robust header matching
+                g_key = field_map.get('gamename')
+                game_name = row.get(g_key, '').strip() if g_key else ''
+                
                 if not game_name:
                     continue
                 if pup_pattern.search(game_name):
@@ -163,14 +163,13 @@ class PupScanner:
         if db_path:
             self.logger.info('Scanning PuP lookup database for table matches: %s' % db_path)
             try:
-                with open(db_path, newline='', encoding='utf-8') as csvfile:
-                    reader = csv.reader(csvfile)
-                    next(reader, None)  # Skip header row
+                with open(db_path, newline='', encoding='utf-8-sig') as csvfile:
+                    reader = csv.DictReader(csvfile)
+                    field_map = {k.strip().lower().replace(' ', ''): k for k in reader.fieldnames} if reader.fieldnames else {}
                     for row in reader:
-                        try:
-                            game_name = row[1]
-                        except IndexError:
-                            continue
+                        g_key = field_map.get('gamename')
+                        game_name = row.get(g_key, '').strip() if g_key else ''
+                        
                         if not game_name:
                             continue
 

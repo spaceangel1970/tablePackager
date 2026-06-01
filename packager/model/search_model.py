@@ -25,25 +25,23 @@ class Search_Model(Observable):
     def pinball_machine(self):
         return self.__pinball_machine
 
-    def update(self, contains:str='', only_with_vpx:bool=True) -> None:
-        # ... (debug print lines) ...
-        print("update (%s)" % contains)
+    def update(self, contains:str='', only_with_vpx:bool=False) -> None:
         self.__pincab = []
         
-        # 1. Normalize search term to lowercase once
-        search_term = contains.lower()
+        search_term = contains.lower().strip()
         
         for key, pincab in self.baseModel.database.data.items():
-            selector: bool = True
+            table_display_name = pincab.get('Table Name', '').lower()
+            
+            # Broad search: check both the technical filename (key) and descriptive table name
+            if search_term and (search_term not in key.lower() and search_term not in table_display_name):
+                continue
+            
+            # Filter for tables with URLs if requested (the VPS CSV currently has empty Urls lists)
+            if only_with_vpx and not pincab.get('Urls'):
+                continue
 
-            # 2. Use 'in' for partial matching and .lower() for case-insensitivity
-            if contains != '':
-                selector = selector and (search_term in key.lower())
-                
-            if only_with_vpx:
-                selector = selector and len(pincab['Urls']) >= 1
-            if selector:
-                self.__pincab.append(key)
+            self.__pincab.append(key)
         
         self.notify_all(self, events=['<<UPDATE TABLES>>'],
                         pinball_machines=self.__pincab,

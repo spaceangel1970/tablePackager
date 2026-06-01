@@ -75,34 +75,38 @@ class TableDatabase:
 
         try:
             with open(self.__dbPath, mode='r', encoding='utf-8-sig') as f:
-                # Explicitly pass a standard comma delimiter to bypass Sniffer glitches
-                reader = csv.DictReader(f, delimiter=',')
-                
+                reader = csv.DictReader(f)
+                # Standardize headers to lowercase/stripped to handle CSV variants
+                field_map = {k.strip().lower().replace(' ', ''): k for k in reader.fieldnames} if reader.fieldnames else {}
+
+                def get_row_val(row_dict, key_name, default_val=''):
+                    key_lower = key_name.lower().replace(' ', '')
+                    actual_key = field_map.get(key_lower)
+                    val = row_dict.get(actual_key) if actual_key else row_dict.get(key_name)
+                    return val.strip() if val is not None else default_val
+
                 for row in reader:
-                    # Map the exact PinUp Popper column names from your log file
-                    filename = row.get('GameFileName', '').strip()
-                    
+                    filename = get_row_val(row, 'GameFileName')
+                    if not filename:
+                        filename = get_row_val(row, 'filename')
+
                     if filename:
-                        # Strip out the trailing .vpx extension if it's baked into the CSV filename field
                         filename_clean = os.path.splitext(filename)[0]
-                        
-                        # In packager/tableDatabase.py, inside your load() method:
-                        # In your tableDatabase.py load() method, ensure the dictionary includes these:
-                    self.__data[filename_clean] = {
-                        'Table Name': row.get('GameName', filename_clean),
-                        'Theme': row.get('GameTheme', 'Unknown'),
-                        'Manufacturer': row.get('Manufact', 'Unknown'),
-                        'Year': row.get('GameYear', 'Unknown'),
-                        'Description(s)': row.get('GameTheme', 'No description available'),
-                        'IPDB Number': self._safe_int(row.get('IPDBNum', 0)),
-                        'Player(s)': row.get('NumPlayers', 'Unknown'),
-                        'Type': row.get('GameType', 'Unknown'),
-                        'Fun Rating': 'N/A',            # Field not in your new CSV
-                        'Notes': 'N/A',                 # Field not in your new CSV
-                        'Design by': row.get('DesignedBy', 'Unknown'),
-                        'Art by': row.get('Author', 'Unknown'),
-                        'Urls': []                      # Ensure this is a list
-        }
+                        self.__data[filename_clean] = {
+                            'Table Name': get_row_val(row, 'GameName', filename_clean),
+                            'Theme': get_row_val(row, 'GameTheme', 'Unknown'),
+                            'Manufacturer': get_row_val(row, 'Manufact', 'Unknown'),
+                            'Year': get_row_val(row, 'GameYear', 'Unknown'),
+                            'Description(s)': get_row_val(row, 'GameTheme', 'No description available'),
+                            'IPDB Number': self._safe_int(get_row_val(row, 'IPDBNum', 0)),
+                            'Player(s)': get_row_val(row, 'NumPlayers', 'Unknown'),
+                            'Type': get_row_val(row, 'GameType', 'Unknown'),
+                            'Fun Rating': 'N/A',
+                            'Notes': 'N/A',
+                            'Design by': get_row_val(row, 'DesignedBy', 'Unknown'),
+                            'Art by': get_row_val(row, 'Author', 'Unknown'),
+                            'Urls': []
+                        }
                         
             self.logger.info(f"Successfully loaded {len(self.__data)} table indices from CSV configuration.")
         except Exception as e:
