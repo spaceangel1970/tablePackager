@@ -94,8 +94,12 @@ class PackagedTablesModel(Observable):
                     # Determine location of the executable (if frozen) or the script directory
                     app_dir = os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else os.getcwd()
                     log_dest = os.path.join(app_dir, 'DeploymentLog.txt')
-                    shutil.copy2(log_src, log_dest)
-                    self.logger.info(f"++ Deployment log exported to app root: {log_dest}")
+                    with open(log_src, 'r') as f_src:
+                        log_content = f_src.read()
+                    with open(log_dest, 'a') as f_dest:
+                        f_dest.write(f"\n\n{'='*60}\nDEPLOYMENT: {packageInfo['name']}\n{'='*60}\n")
+                        f_dest.write(log_content)
+                    self.logger.info(f"++ Deployment log appended to: {log_dest}")
 
                 shutil.copyfile(
                     self.baseModel.tmp_path + '/' + packageInfo['name'] + '/' + packageInfo['name'] + '.manifest.json',
