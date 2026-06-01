@@ -109,12 +109,6 @@ class FuturePinball:
         if not os.path.exists(self.future_pinball_path):
             return
 
-        # Only execute logic if 'future pinball' is checked/present in the manifest
-        if not (hasattr(package, 'manifest') and 
-                hasattr(package.manifest, 'content') and 
-                "future pinball" in package.manifest.content):
-            return
-
         # Load override mapping from FP_mapping.ini if present
         mapping = {}
         mapping_file = Path("FP_mapping.ini")
@@ -143,7 +137,16 @@ class FuturePinball:
             self.logger.warning(f"! Future Pinball table file not found: {fpt_file.name}")
             return
 
-        package.add_file(fpt_file, 'future pinball/Tables')
+        package.add_file(fpt_file, "future pinball/Tables")
+
+        # Extract BAM CFG file if it exists
+        cfg_filename = fpt_file.stem + '.cfg'
+        cfg_file = Path(os.path.join(self.future_pinball_path, 'BAM', 'cfg', cfg_filename))
+        if cfg_file.exists():
+            self.logger.info(f"  + BAM configuration file found: {cfg_filename}")
+            package.add_file(cfg_file, "future pinball/BAM", dst_file=f"cfg/{cfg_filename}")
+        else:
+            self.logger.info(f"  - No BAM configuration file found for: {fpt_file.stem}")
 
         # Determine the correct PUP Pack folder
         pup_folder = mapping.get('PupPack')
@@ -174,10 +177,14 @@ class FuturePinball:
                 for file_path in Path(pup_path).glob('**/*'):
                     if file_path.is_file():
                         rel_path = file_path.relative_to(Path(pup_path))
-                        # Use the base category as the manifest key to ensure it appears in the Preview UI
-                        # Prepend the pup_folder to the destination file path to preserve the directory structure
                         package.add_file(file_path, "future pinball/PUPVideos", 
                                          dst_file=f"{pup_folder}/" + str(rel_path).replace('\\', '/'))
                 return
 
         self.logger.info(f"- No PUP pack found for folder: {pup_folder}")
+
+        # --- SESSION LOG CAPTURE ---
+        log_path = os.path.join(tempfile.gettempdir(), 'tablePackager.log')
+        if os.path.exists(log_path):
+            self.logger.info(f"* Bundling session log: {log_path}")
+            package.add_file(log_path, 'future pinball/logs', dst_file='Log.txt')

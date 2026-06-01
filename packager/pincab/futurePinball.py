@@ -162,7 +162,16 @@ class FuturePinball:
 
         if table_file.exists():
             self.logger.info(f"  + Found Table: {table_file.name}")
-            package.add_file(table_file, 'future pinball/tables')
+            package.add_file(table_file, 'future pinball/Tables')
+
+            # Extract BAM CFG file if it exists
+            cfg_filename = table_file.stem + '.cfg'
+            cfg_file = Path(fp_path) / "BAM" / "cfg" / cfg_filename
+            if cfg_file.exists():
+                self.logger.info(f"    + BAM configuration file found: {cfg_filename}")
+                package.add_file(cfg_file, 'future pinball/BAM', dst_file=f'cfg/{cfg_filename}')
+            else:
+                self.logger.info(f"    - No BAM configuration file found for: {table_file.stem}")
 
             # Determine the correct PUP Pack folder
             pup_folder = mapping.get('PupPack')
@@ -197,9 +206,7 @@ class FuturePinball:
                         for file_path in pup_path.glob('**/*'):
                             if file_path.is_file():
                                 rel_path = file_path.relative_to(pup_path)
-                                # Use the base category as the manifest key to ensure it appears in the Preview UI
-                                # Prepend the pup_folder to the destination file path to preserve the directory structure
-                                package.add_file(file_path, "future pinball/PUPVideos", 
+                                package.add_file(file_path, 'future pinball/PUPVideos', 
                                                  dst_file=f"{pup_folder}/" + str(rel_path).replace('\\', '/'))
                         break
                     else:
@@ -209,7 +216,6 @@ class FuturePinball:
             log_path = os.path.join(tempfile.gettempdir(), 'tablePackager.log')
             if os.path.exists(log_path):
                 self.logger.info(f"* Bundling session log: {log_path}")
-                # category 'future pinball/logs' ensures it shows up under the FP folder in the tree
                 package.add_file(log_path, 'future pinball/logs', dst_file='Log.txt')
 
         self.logger.info("--------------------------------------------------")
