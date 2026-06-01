@@ -57,14 +57,6 @@ class VisualPinball:
         if not os.path.exists(self.visual_pinball_path):
             raise ValueError('Visual Pinball not found(%s)' % self.visual_pinball_path)
 
-        # --- DYNAMIC STRUCTURAL ADAPTER INJECTION ---
-        if hasattr(package, 'manifest') and hasattr(package.manifest, 'content'):
-            if "visual pinball" in package.manifest.content:
-                # Force Music to be a list if it's missing or currently a dict
-                if "Music" not in package.manifest.content["visual pinball"] or \
-                   not isinstance(package.manifest.content["visual pinball"]["Music"], list):
-                    package.manifest.content["visual pinball"]["Music"] = []
-
         self.logger.info("* Visual Pinball X files")
         vpx_file = Path(self.visual_pinball_path + '/tables/' + package.name + '.vpx')
         ini_file = Path(self.visual_pinball_path + '/tables/' + package.name + '.ini')
