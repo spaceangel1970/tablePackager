@@ -173,6 +173,34 @@ class FuturePinball:
             else:
                 self.logger.info(f"    - No BAM configuration file found for: {table_file.stem}")
 
+            # --- DMDDEVICE.INI SLICING ---
+            # Search for the table's filename in the global DmdDevice.ini and slice out its specific section
+            dmd_ini_path = Path(fp_path) / "DmdDevice.ini"
+            if dmd_ini_path.exists():
+                table_stem = table_file.stem.lower().strip()
+                try:
+                    with open(dmd_ini_path, 'r', encoding='utf-8', errors='ignore') as f:
+                        ini_lines = f.readlines()
+                    
+                    target_header = f"[{table_stem}]"
+                    captured_lines = []
+                    inside_block = False
+                    for line in ini_lines:
+                        clean = line.strip().lower()
+                        if clean.startswith('[') and clean.endswith(']'):
+                            if inside_block: break
+                            if clean == target_header: inside_block = True
+                        if inside_block: captured_lines.append(line)
+                    
+                    if captured_lines:
+                        tmp_ini = os.path.join(tempfile.gettempdir(), f"FP_DMD_{table_stem}.ini")
+                        with open(tmp_ini, 'w', encoding='utf-8') as f_out:
+                            f_out.writelines(captured_lines)
+                        package.add_file(tmp_ini, "future pinball/Config", dst_file="DmdDevice.ini")
+                        self.logger.info(f"    ++ Sliced DmdDevice.ini section for: {table_stem}")
+                except Exception as e:
+                    self.logger.error(f"    ! Error slicing DmdDevice.ini: {e}")
+
             # Determine the correct PUP Pack folder
             pup_folder = mapping.get('PupPack')
             if pup_folder:
