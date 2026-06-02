@@ -212,6 +212,16 @@ class FuturePinball:
                     else:
                         self.logger.info(f"    - Folder exists but is empty.")
 
+            # --- LIBRARIES EXTRACTION ---
+            lib_dir = Path(fp_path) / "Libraries"
+            if lib_dir.exists() and lib_dir.is_dir():
+                self.logger.info(f"    + Archiving Libraries folder contents: {lib_dir}")
+                for file_path in lib_dir.glob('**/*'):
+                    if file_path.is_file():
+                        rel_path = file_path.relative_to(lib_dir)
+                        package.add_file(file_path, 'future pinball/Libraries', 
+                                         dst_file=str(rel_path).replace('\\', '/'))
+
             # --- SESSION LOG CAPTURE ---
             log_path = os.path.join(tempfile.gettempdir(), 'tablePackager.log')
             if os.path.exists(log_path):
@@ -266,6 +276,12 @@ class FuturePinball:
                 copytree(self.logger, pup_src, dest_pup)
             else:
                 self.logger.warning('PinUp System path not found, skipping PUPVideos deployment.')
+
+        # 4. Deploy Libraries
+        lib_src = os.path.join(source_base, "Libraries")
+        if os.path.exists(lib_src):
+            self.logger.info(f"+ Deploying Libraries to {os.path.join(fp_path, 'Libraries')}")
+            copytree(self.logger, lib_src, os.path.join(fp_path, "Libraries"))
 
     def delete(self, table_name: str) -> None:
         """

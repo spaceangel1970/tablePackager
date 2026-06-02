@@ -184,6 +184,16 @@ class FuturePinball:
 
         self.logger.info(f"- No PUP pack found for folder: {pup_folder}")
 
+        # --- LIBRARIES EXTRACTION ---
+        lib_dir = Path(self.future_pinball_path) / "Libraries"
+        if lib_dir.exists() and lib_dir.is_dir():
+            self.logger.info(f"  + Archiving Libraries folder contents: {lib_dir}")
+            for file_path in lib_dir.glob('**/*'):
+                if file_path.is_file():
+                    rel_path = file_path.relative_to(lib_dir)
+                    package.add_file(file_path, "future pinball/Libraries", 
+                                     dst_file=str(rel_path).replace('\\', '/'))
+
         # --- SESSION LOG CAPTURE ---
         log_path = os.path.join(tempfile.gettempdir(), 'tablePackager.log')
         if os.path.exists(log_path):
