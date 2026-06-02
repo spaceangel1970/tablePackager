@@ -73,7 +73,8 @@ class MainWindow(Observer, Observable):
         self.__cbExPinupSystem.grid(column=0, row=2, sticky='NW')
         self.__cbExPinupSystemToolTip = CreateToolTip(self.__cbExPinupSystem, 'Not Yet Implemented')
         self.__cbExPinballX = Checkbutton(self.__extractFrame, variable=self.__extractAppChoice['pinballX'],
-                                          onvalue=True, offvalue=False, text='Pinball X')
+                                          onvalue=True, offvalue=False, text='Pinball X',
+                                          state=DISABLED)
 
         self.__cbExPinballX.grid(column=0, row=3, sticky='NW')
 
@@ -110,7 +111,8 @@ class MainWindow(Observer, Observable):
                                               offvalue=False)
         self.__cbInsPinupSystem.grid(column=0, row=6, sticky='NW')
         self.__cbInsPinballX = Checkbutton(self.__installFrame, text='Pinball X',
-                                           variable=self.__installAppChoice['pinballX'], onvalue=True, offvalue=False)
+                                           variable=self.__installAppChoice['pinballX'], onvalue=True, offvalue=False,
+                                           state=DISABLED)
         self.__cbInsPinballX.grid(column=0, row=7, sticky='NW')
 
         self.__btInstall = Button(self.__installFrame, image=self.__btInstallImage, command=self.install_on_click,

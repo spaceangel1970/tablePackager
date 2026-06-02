@@ -80,8 +80,9 @@ class PackagedTablesModel(Observable):
                     self.baseModel.vpinMame.deploy(package)
                     self.baseModel.ultraDMD.deploy(package)
                     self.baseModel.flexDMD.deploy(package)
-                if context['pinballX'].get():
-                    self.baseModel.pinballX.deploy(package)
+                # PinballX deployment is temporarily disabled
+                # if context['pinballX'].get():
+                #     self.baseModel.pinballX.deploy(package)
                 if context['futurPinball'].get():
                     self.baseModel.futurePinball.deploy(package)
                 if context['pinupSystem'].get():

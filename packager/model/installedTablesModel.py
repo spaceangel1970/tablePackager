@@ -121,8 +121,9 @@ class InstalledTablesModel(Observable):
                     self.baseModel.flexDMD.extract(table['name'], package)
                     if context['pinupSystem'].get():
                         self.baseModel.pinupSystem.extract(package, 'visual pinball')
-                if context['pinballX'].get():
-                    self.baseModel.pinballX.extract(table['name'], package)
+                # PinballX extraction is temporarily disabled
+                # if context['pinballX'].get():
+                #     self.baseModel.pinballX.extract(table['name'], package)
                 if context['futurPinball'].get():
                     self.baseModel.futurePinball.extract(package)
                     if context['pinupSystem'].get():
@@ -199,7 +200,8 @@ class InstalledTablesModel(Observable):
             else:
                 self.baseModel.ultraDMD.delete(table['name'])  # use package.manifest if exists
                 self.baseModel.flexDMD.delete(table['name'])  # use package.manifest if exists
-            self.baseModel.pinballX.delete(table['name'])
+            # PinballX deletion is temporarily disabled
+            # self.baseModel.pinballX.delete(table['name'])
             self.baseModel.pinupSystem.delete(table['name'], 'visual pinball')
             self.baseModel.pinupSystem.delete(table['name'], 'future pinball')
             self.baseModel.futurePinball.delete(table['name'])
