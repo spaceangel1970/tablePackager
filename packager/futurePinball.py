@@ -368,6 +368,10 @@ class FuturePinball:
                     header_index = idx
                     break
 
+            # Ensure the snippet is preceded by a blank line for readability, unless it's the start of the file
+            if header_index != 0 and global_lines and snippet_lines and snippet_lines[0].strip():
+                snippet_lines.insert(0, '\n')
+
             if header_index != -1:
                 end_index = len(global_lines)
                 for idx in range(header_index + 1, len(global_lines)):
