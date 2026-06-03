@@ -173,6 +173,26 @@ class FuturePinball:
             else:
                 self.logger.info(f"    - No BAM configuration file found for: {table_file.stem}")
 
+            # --- fpRAM EXTRACTION ---
+            fpram_filename = table_file.stem + '.fpRAM'
+            fpram_file = Path(fp_path) / "fpRAM" / fpram_filename
+            self.logger.info(f"      > Checking for fpRAM: {fpram_file}")
+            if fpram_file.exists():
+                self.logger.info(f"      + fpRAM file found: {fpram_filename}")
+                package.add_file(fpram_file, "future pinball/fpRAM")
+            else:
+                self.logger.info(f"      - No fpRAM file found for: {table_file.stem}")
+
+            # --- LIBRARIES EXTRACTION ---
+            lib_dir = Path(fp_path) / "Libraries"
+            if lib_dir.exists() and lib_dir.is_dir():
+                self.logger.info(f"      + Archiving Libraries folder contents: {lib_dir}")
+                for file_path in lib_dir.glob('**/*'):
+                    if file_path.is_file():
+                        rel_path = file_path.relative_to(lib_dir)
+                        package.add_file(file_path, 'future pinball/Libraries', 
+                                         dst_file=str(rel_path).replace('\\', '/'))
+
             # --- DMDDEVICE.INI SLICING ---
             # Search for the table's filename in the global DmdDevice.ini and slice out its specific section
             dmd_ini_path = Path(fp_path) / "DmdDevice.ini"
@@ -201,6 +221,13 @@ class FuturePinball:
                 except Exception as e:
                     self.logger.error(f"    ! Error slicing DmdDevice.ini: {e}")
 
+            # --- SESSION LOG CAPTURE ---
+            log_path = os.path.join(tempfile.gettempdir(), 'tablePackager.log')
+            if os.path.exists(log_path):
+                self.logger.info(f"* Bundling session log: {log_path}")
+                package.add_file(log_path, 'future pinball/logs', dst_file='Log.txt')
+
+            # --- PUP PACK EXTRACTION ---
             # Determine the correct PUP Pack folder
             pup_folder = mapping.get('PupPack')
             if pup_folder:
@@ -240,22 +267,6 @@ class FuturePinball:
                     else:
                         self.logger.info(f"    - Folder exists but is empty.")
 
-            # --- LIBRARIES EXTRACTION ---
-            lib_dir = Path(fp_path) / "Libraries"
-            if lib_dir.exists() and lib_dir.is_dir():
-                self.logger.info(f"    + Archiving Libraries folder contents: {lib_dir}")
-                for file_path in lib_dir.glob('**/*'):
-                    if file_path.is_file():
-                        rel_path = file_path.relative_to(lib_dir)
-                        package.add_file(file_path, 'future pinball/Libraries', 
-                                         dst_file=str(rel_path).replace('\\', '/'))
-
-            # --- SESSION LOG CAPTURE ---
-            log_path = os.path.join(tempfile.gettempdir(), 'tablePackager.log')
-            if os.path.exists(log_path):
-                self.logger.info(f"* Bundling session log: {log_path}")
-                package.add_file(log_path, 'future pinball/logs', dst_file='Log.txt')
-
         # Cleanup empty folders in the staging area for a cleaner ZIP
         package_root = Path(package.directory) / package.name
         if package_root.exists():
@@ -265,6 +276,7 @@ class FuturePinball:
                     if dir_path.exists() and not any(dir_path.iterdir()):
                         dir_path.rmdir()
 
+        self.logger.info(f"*** Finished processing Future Pinball assets for: {package.name} ***")
         self.logger.info("--------------------------------------------------")
 
     def deploy(self, package: Package) -> None:
@@ -311,6 +323,76 @@ class FuturePinball:
             self.logger.info(f"+ Deploying Libraries to {os.path.join(fp_path, 'Libraries')}")
             copytree(self.logger, lib_src, os.path.join(fp_path, "Libraries"))
 
+        # 5. Deploy fpRAM
+        fpram_src = os.path.join(source_base, "fpRAM")
+        if os.path.exists(fpram_src):
+            self.logger.info(f"+ Deploying fpRAM to {os.path.join(fp_path, 'fpRAM')}")
+            copytree(self.logger, fpram_src, os.path.join(fp_path, "fpRAM"))
+
+        # 6. Deploy DmdDevice.ini (Merge)
+        dmd_src = os.path.join(source_base, "Config", "DmdDevice.ini")
+        if os.path.exists(dmd_src):
+            dmd_dest = os.path.join(fp_path, "DmdDevice.ini")
+            self.logger.info(f"+ Merging DmdDevice.ini settings into {dmd_dest}")
+            self.merge_dmd_ini(dmd_src, dmd_dest)
+
+    def merge_dmd_ini(self, source_snippet, target_global_file):
+        """Surgically inserts or updates a single table block profile within the master global DmdDevice.ini."""
+        try:
+            if not os.path.exists(source_snippet):
+                return
+
+            with open(source_snippet, 'r', encoding='utf-8') as f:
+                snippet_lines = f.readlines()
+
+            target_header = ""
+            for line in snippet_lines:
+                if line.strip().startswith('[') and line.strip().endswith(']'):
+                    target_header = line.strip().lower()
+                    break
+
+            if not target_header:
+                return
+
+            if not os.path.exists(target_global_file):
+                shutil.copy2(source_snippet, target_global_file)
+                self.logger.info("++ Global DmdDevice.ini missing on target. Created file from snippet profile.")
+                return
+
+            with open(target_global_file, 'r', encoding='utf-8', errors='ignore') as f:
+                global_lines = f.readlines()
+
+            header_index = -1
+            for idx, line in enumerate(global_lines):
+                if line.strip().lower() == target_header:
+                    header_index = idx
+                    break
+
+            if header_index != -1:
+                # Section exists: Replace the existing block
+                end_index = len(global_lines)
+                for idx in range(header_index + 1, len(global_lines)):
+                    if global_lines[idx].strip().startswith('[') and global_lines[idx].strip().endswith(']'):
+                        end_index = idx
+                        break
+                
+                updated_content = global_lines[:header_index] + snippet_lines + global_lines[end_index:]
+                with open(target_global_file, 'w', encoding='utf-8') as f:
+                    f.writelines(updated_content)
+                self.logger.info(f"++ Successfully overwritten existing custom DMD block settings for {target_header} inside global INI.")
+            else:
+                # Section doesn't exist: Append to the end
+                if global_lines and not global_lines[-1].endswith('\n'):
+                    global_lines.append('\n')
+                global_lines.extend(snippet_lines)
+                
+                with open(target_global_file, 'w', encoding='utf-8') as f:
+                    f.writelines(global_lines)
+                self.logger.info(f"++ Successfully appended new custom DMD parameters for {target_header} to global DmdDevice.ini matrix.")
+
+        except Exception as e:
+            self.logger.error(f"[DMD INI Merge Error] Failed processing machine layout insertion: {str(e)}")
+
     def delete(self, table_name: str) -> None:
         """
         Removes Future Pinball assets from the system for a given table.
@@ -330,3 +412,9 @@ class FuturePinball:
         if cfg_file.exists():
             self.logger.info(f"- remove BAM configuration file: {cfg_file.name}")
             os.remove(cfg_file)
+
+        # Also clean up fpRAM if it exists
+        fpram_file = Path(fp_path) / "fpRAM" / f"{table_name}.fpRAM"
+        if fpram_file.exists():
+            self.logger.info(f"- remove fpRAM file: {fpram_file.name}")
+            os.remove(fpram_file)
