@@ -1,0 +1,45 @@
+
+
+============================================================
+DEPLOYMENT: Halloween (Original 2022) TerryRed 1.9 MOD (2026-06-03T12:45:36.416073+00:00)
+============================================================
+2026-06-03 20:44:58,287 [MainThread  ] [INFO ]  Starting
+2026-06-03 20:44:58,288 [MainThread  ] [INFO ]  Started
+2026-06-03 20:44:58,291 [MainThread  ] [INFO ]  Reading VPS puplookup.csv Database
+2026-06-03 20:44:58,334 [MainThread  ] [INFO ]  Successfully loaded 2631 table indices from CSV configuration.
+2026-06-03 20:44:58,457 [MainThread  ] [INFO ]  Scanning for Visual Pinball tables...
+2026-06-03 20:45:02,083 [MainThread  ] [INFO ]  Scanning for Future Pinball tables...
+2026-06-03 20:45:04,771 [Thread-1    ] [INFO ]  Begin Extraction
+2026-06-03 20:45:04,774 [Thread-1    ] [INFO ]  --[Working on 'Halloween (Original 2022) TerryRed 1.9 MOD']------------------
+2026-06-03 20:45:04,789 [Thread-1    ] [INFO ]  -- No existing manifest found at ./installed, starting fresh.
+2026-06-03 20:45:04,789 [Thread-1    ] [INFO ]  * Starting Future Pinball assets extraction
+2026-06-03 20:45:04,790 [Thread-1    ] [INFO ]    > Configured Future Pinball Path: C:/vPinball/FuturePinball
+2026-06-03 20:45:04,790 [Thread-1    ] [INFO ]    + Applied mapping section [Halloween] to 'Halloween (Original 2022) TerryRed 1.9 MOD' from FP_mapping.ini
+2026-06-03 20:45:04,790 [Thread-1    ] [INFO ]    + Table file identified via mapping: Halloween (Original 2022) TerryRed 1.9 MOD.fpt
+2026-06-03 20:45:04,791 [Thread-1    ] [INFO ]    + Found Table: Halloween (Original 2022) TerryRed 1.9 MOD.fpt
+2026-06-03 20:45:04,792 [Thread-1    ] [INFO ]  + add 'C:\vPinball\FuturePinball\Tables\Halloween (Original 2022) TerryRed 1.9 MOD.fpt' -> 'future pinball/Tables/Halloween (Original 2022) TerryRed 1.9 MOD.fpt'
+2026-06-03 20:45:05,003 [Thread-1    ] [INFO ]      + BAM configuration file found: Halloween (Original 2022) TerryRed 1.9 MOD.cfg
+2026-06-03 20:45:05,004 [Thread-1    ] [INFO ]  + add 'C:\vPinball\FuturePinball\BAM\cfg\Halloween (Original 2022) TerryRed 1.9 MOD.cfg' -> 'future pinball/BAM/cfg/Halloween (Original 2022) TerryRed 1.9 MOD.cfg'
+2026-06-03 20:45:05,008 [Thread-1    ] [INFO ]        > Checking for fpRAM: C:\vPinball\FuturePinball\fpRAM\Halloween (Original 2022) TerryRed 1.9 MOD.fpRAM
+2026-06-03 20:45:05,009 [Thread-1    ] [INFO ]        + fpRAM file found: Halloween (Original 2022) TerryRed 1.9 MOD.fpRAM
+2026-06-03 20:45:05,009 [Thread-1    ] [INFO ]  + add 'C:\vPinball\FuturePinball\fpRAM\Halloween (Original 2022) TerryRed 1.9 MOD.fpRAM' -> 'future pinball/fpRAM/Halloween (Original 2022) TerryRed 1.9 MOD.fpRAM'
+2026-06-03 20:45:05,011 [Thread-1    ] [INFO ]        + Archiving Libraries folder contents: C:\vPinball\FuturePinball\Libraries
+2026-06-03 20:45:05,012 [Thread-1    ] [INFO ]  + add 'C:\vPinball\FuturePinball\Libraries\BVP Animation.fpl' -> 'future pinball/Libraries/BVP Animation.fpl'
+2026-06-03 20:45:05,032 [Thread-1    ] [INFO ]  + add 'C:\vPinball\FuturePinball\Libraries\BVP Graphics.fpl' -> 'future pinball/Libraries/BVP Graphics.fpl'
+2026-06-03 20:45:05,058 [Thread-1    ] [INFO ]  + add 'C:\vPinball\FuturePinball\Libraries\BVP Screen.fpl' -> 'future pinball/Libraries/BVP Screen.fpl'
+2026-06-03 20:45:05,094 [Thread-1    ] [INFO ]  + add 'C:\vPinball\FuturePinball\Libraries\BVP Sounds.fpl' -> 'future pinball/Libraries/BVP Sounds.fpl'
+2026-06-03 20:45:05,174 [Thread-1    ] [INFO ]  + add 'C:\vPinball\FuturePinball\Libraries\fpDmdFonts.fpl' -> 'future pinball/Libraries/fpDmdFonts.fpl'
+2026-06-03 20:45:05,187 [Thread-1    ] [INFO ]  + add 'C:\vPinball\FuturePinball\Libraries\fpModels.fpl' -> 'future pinball/Libraries/fpModels.fpl'
+2026-06-03 20:45:05,211 [Thread-1    ] [INFO ]  + add 'C:\vPinball\FuturePinball\Libraries\fpPlayfields.fpl' -> 'future pinball/Libraries/fpPlayfields.fpl'
+2026-06-03 20:45:05,223 [Thread-1    ] [INFO ]  + add 'C:\vPinball\FuturePinball\Libraries\fpRamps.fpl' -> 'future pinball/Libraries/fpRamps.fpl'
+2026-06-03 20:45:05,236 [Thread-1    ] [INFO ]  + add 'C:\vPinball\FuturePinball\Libraries\fpScripts.fpl' -> 'future pinball/Libraries/fpScripts.fpl'
+2026-06-03 20:45:05,239 [Thread-1    ] [INFO ]  + add 'C:\vPinball\FuturePinball\Libraries\fpSounds.fpl' -> 'future pinball/Libraries/fpSounds.fpl'
+2026-06-03 20:45:05,250 [Thread-1    ] [INFO ]  + add 'C:\vPinball\FuturePinball\Libraries\fpSphereMaps.fpl' -> 'future pinball/Libraries/fpSphereMaps.fpl'
+2026-06-03 20:45:05,261 [Thread-1    ] [INFO ]  + add 'C:\vPinball\FuturePinball\Libraries\fpTextures.fpl' -> 'future pinball/Libraries/fpTextures.fpl'
+2026-06-03 20:45:05,276 [Thread-1    ] [INFO ]  + add 'C:\vPinball\FuturePinball\Libraries\JYCGFX.fpl' -> 'future pinball/Libraries/JYCGFX.fpl'
+2026-06-03 20:45:05,299 [Thread-1    ] [INFO ]  + add 'C:\vPinball\FuturePinball\Libraries\JYCmusic.fpl' -> 'future pinball/Libraries/JYCmusic.fpl'
+2026-06-03 20:45:05,347 [Thread-1    ] [INFO ]  + add 'C:\vPinball\FuturePinball\Libraries\JYCSFX.fpl' -> 'future pinball/Libraries/JYCSFX.fpl'
+2026-06-03 20:45:05,375 [Thread-1    ] [INFO ]  + add 'C:\Users\DAVID\AppData\Local\Temp\FP_DMD_halloween (original 2022) terryred 1.9 mod.ini' -> 'future pinball/Config/DmdDevice.ini'
+2026-06-03 20:45:05,383 [Thread-1    ] [INFO ]      ++ Sliced DmdDevice.ini section for: halloween (original 2022) terryred 1.9 mod
+2026-06-03 20:45:05,384 [Thread-1    ] [INFO ]  * Bundling session log: C:\Users\DAVID\AppData\Local\Temp\tablePackager.log
+2026-06-03 20:45:05,385 [Thread-1    ] [INFO ]  + add 'C:\Users\DAVID\AppData\Local\Temp\tablePackager.log' -> 'future pinball/logs/Log.txt'

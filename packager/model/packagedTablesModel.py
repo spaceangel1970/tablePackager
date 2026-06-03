@@ -89,16 +89,21 @@ class PackagedTablesModel(Observable):
                     product = 'future pinball' if context['futurPinball'].get() else 'visual pinball'
                     self.baseModel.pinupSystem.deploy(package, product)
 
-                # --- NEW: Export deployment log to the Application directory ---
-                log_src = os.path.normpath(os.path.join(self.baseModel.tmp_path, packageInfo['name'], 'logs', 'Log.txt'))
-                if os.path.exists(log_src):
+                # --- Log Aggregation: Append the packaged session log to the application DeploymentLog.txt ---
+                # Check common locations inside the package (VPX root and FP root)
+                possible_logs = [
+                    os.path.join(self.baseModel.tmp_path, packageInfo['name'], 'logs', 'Log.txt'),
+                    os.path.join(self.baseModel.tmp_path, packageInfo['name'], 'future pinball', 'logs', 'Log.txt')
+                ]
+                
+                for log_src in [os.path.normpath(p) for p in possible_logs if os.path.exists(p)]:
                     # Determine location of the executable (if frozen) or the script directory
                     app_dir = os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else os.getcwd()
                     log_dest = os.path.join(app_dir, 'DeploymentLog.txt')
-                    with open(log_src, 'r') as f_src:
+                    with open(log_src, 'r', encoding='utf-8', errors='ignore') as f_src:
                         log_content = f_src.read()
-                    with open(log_dest, 'a') as f_dest:
-                        f_dest.write(f"\n\n{'='*60}\nDEPLOYMENT: {packageInfo['name']}\n{'='*60}\n")
+                    with open(log_dest, 'a', encoding='utf-8') as f_dest:
+                        f_dest.write(f"\n\n{'='*60}\nDEPLOYMENT: {packageInfo['name']} ({utcTime2IsoStr()})\n{'='*60}\n")
                         f_dest.write(log_content)
                     self.logger.info(f"++ Deployment log appended to: {log_dest}")
 
