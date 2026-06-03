@@ -89,17 +89,29 @@ class PackagedTablesModel(Observable):
                     product = 'future pinball' if context['futurPinball'].get() else 'visual pinball'
                     self.baseModel.pinupSystem.deploy(package, product)
 
-                # --- Log Aggregation: Append the packaged session log to the application DeploymentLog.txt ---
-                # Check common locations inside the package (VPX root and FP root)
+                # --- Log Management & Aggregation ---
+                # Determine global log location (executable dir if frozen, else current working dir)
+                app_dir = os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else os.getcwd()
+                log_dest = os.path.join(app_dir, 'DeploymentLog.txt')
+
+                # Manage log size: Rotate the log if it exceeds 2MB to prevent infinite growth
+                if os.path.exists(log_dest) and os.path.getsize(log_dest) > 2 * 1024 * 1024:
+                    try:
+                        old_log = log_dest.replace('.txt', '.old.txt')
+                        if os.path.exists(old_log):
+                            os.remove(old_log)
+                        os.rename(log_dest, old_log)
+                        self.logger.info(f"++ DeploymentLog.txt reached size limit; rotated to {os.path.basename(old_log)}")
+                    except Exception as e:
+                        self.logger.warning(f"Could not rotate deployment log: {e}")
+
+                # Append the session logs captured inside the package to the global log
                 possible_logs = [
                     os.path.join(self.baseModel.tmp_path, packageInfo['name'], 'logs', 'Log.txt'),
                     os.path.join(self.baseModel.tmp_path, packageInfo['name'], 'future pinball', 'logs', 'Log.txt')
                 ]
                 
                 for log_src in [os.path.normpath(p) for p in possible_logs if os.path.exists(p)]:
-                    # Determine location of the executable (if frozen) or the script directory
-                    app_dir = os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else os.getcwd()
-                    log_dest = os.path.join(app_dir, 'DeploymentLog.txt')
                     with open(log_src, 'r', encoding='utf-8', errors='ignore') as f_src:
                         log_content = f_src.read()
                     with open(log_dest, 'a', encoding='utf-8') as f_dest:
