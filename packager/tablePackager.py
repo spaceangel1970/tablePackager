@@ -13,8 +13,6 @@ from packager.model.baseModel import *
 from packager.tools.logHandler import *
 
 
-# https://datastudio.google.com/reporting/13ua5g7jmoyHovP4hrqk48HBYGeQbpJ1Z/page/55yX
-
 def main():
     # Ensure the working directory is set to the application directory
     # This handles both PyInstaller (_MEIPASS) and cx_Freeze/standard execution
