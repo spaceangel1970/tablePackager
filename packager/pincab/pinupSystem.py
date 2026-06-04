@@ -41,7 +41,19 @@ class PinUpSystem:
         for file in Path(
                 self.baseModel.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/' + media)\
                 .glob('**/%s%s*' % (name_to_search, extension)):
-            package.add_file(file, dataPath)  # Add vpx file
+            
+            # --- CUSTOM INTERCEPT: Route Wheel thumbnails to pthumbs subfolder ---
+            # PinUp Popper expects thumbnails to reside in a specific 'pthumbs' directory.
+            # We keep the manifest branch at 'media/Wheel' (a list) to avoid structure errors,
+            # but tell Package.add_file to place it in the 'pthumbs' subfolder physically.
+            target_dst_file = None
+            if media == 'Wheel':
+                fname = file.name.lower()
+                if fname.endswith('_thumb.png') or fname.endswith('_thumb_sm.png') or fname.endswith('-thumb_sm.png'):
+                    target_dst_file = f"pthumbs/{file.name}"
+                    self.logger.info(f"  + Routing Wheel thumbnail to subfolder: {file.name}")
+
+            package.add_file(file, dataPath, dst_file=target_dst_file)
 
     def extract(self, package: Package, product: str, search_name: str = None) -> None:
         if not os.path.exists(self.pinupSystem_path):
