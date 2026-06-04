@@ -32,12 +32,10 @@ class VisualPinball:
         if not os.path.exists(self.visual_pinball_path):
             raise ValueError('Visual Pinball not found(%s)' % self.visual_pinball_path)
 
-        # Normalize table name: strip extension more robustly (handle dot or no dot)
+        # Normalize table name: strip extension only if a dot is present
         table_stem = table_name
         if table_stem.lower().endswith(('.vpx', '.vpt')):
             table_stem = os.path.splitext(table_stem)[0]
-        elif table_stem.lower().endswith(('vpx', 'vpt')):
-            table_stem = table_stem[:-3]
         table_stem = table_stem.strip()
 
         vpx_file = Path(self.visual_pinball_path + '/tables/' + table_stem + '.vpx')
@@ -67,12 +65,10 @@ class VisualPinball:
 
         self.logger.info("* Visual Pinball X files")
 
-        # Normalize table name: strip extension more robustly (handle dot or no dot)
+        # Normalize table name: strip extension only if a dot is present
         table_stem = package.name
         if table_stem.lower().endswith(('.vpx', '.vpt')):
             table_stem = os.path.splitext(table_stem)[0]
-        elif table_stem.lower().endswith(('vpx', 'vpt')):
-            table_stem = table_stem[:-3]
         table_stem = table_stem.strip()
 
         vpx_file = Path(self.visual_pinball_path + '/tables/' + table_stem + '.vpx')
@@ -420,6 +416,11 @@ class VisualPinball:
                     added = True
 
             if added:
+                # Ensure leading ROM tags are on new lines for compatibility with B2S Server
+                snippet_root.text = '\n'
+                for child in snippet_root:
+                    child.tail = '\n'
+
                 # Use a reliable temporary path
                 tmp_dir = tempfile.gettempdir()
                 tmp_xml_path = os.path.join(tmp_dir, f"B2S_{package.name}.xml")

@@ -496,7 +496,11 @@ class PackageEditorViewer(Frame, Observer):
                         for info_name in content[product][category]:
                             field_value = ''
                             if type(content[product][category][info_name]) is list:
-                                field_value = ','.join(content[product][category][info_name])
+                                # Just show the primary ROM name in the treeview display
+                                if info_name == 'romName' and len(content[product][category][info_name]) > 0:
+                                    field_value = content[product][category][info_name][0]
+                                else:
+                                    field_value = ','.join(content[product][category][info_name])
                             else:
                                 field_value = content[product][category][info_name]
                             self.__tree.insert(info_folder, "end", tag=['info', product + '/' + info_name],

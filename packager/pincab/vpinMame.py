@@ -21,9 +21,6 @@ class VPinMame:
         stripped_name = table_name
         if stripped_name.lower().endswith(('.vpx', '.vpt', '.fpt')):
             stripped_name = os.path.splitext(stripped_name)[0]
-        elif stripped_name.lower().endswith(('vpx', 'vpt', 'fpt')):
-            # Handle cases where extension is present without the leading dot
-            stripped_name = stripped_name[:-3]
 
         stripped_name = stripped_name.strip()
         stripped_name = re.sub(r'\s+(?:v?)(?:\d+(?:\.\d+)*)(?:\s*VR)?\s*$', '', stripped_name, flags=re.IGNORECASE)
@@ -275,6 +272,11 @@ class VPinMame:
                                 break
 
                     if captured:
+                        # Ensure leading ROM tags are on new lines for compatibility with B2S Server
+                        snippet_root.text = '\n'
+                        for child in snippet_root:
+                            child.tail = '\n'
+
                         self.logger.info(f"++ Slicing out custom B2S XML profile settings for [{rom}] mapped to [{primary_table_rom}]")
                         tmp_file = None
                         try:

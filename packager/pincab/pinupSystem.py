@@ -32,11 +32,9 @@ class PinUpSystem:
     def extract_file(self, package: Package, product: str, media, dataPath, extension='', search_name=None) -> None:
         name_to_search = search_name if search_name else package.name
 
-        # Ensure we search for the base name without extensions (fixes Wheel/media detection) (handle dot or no dot)
+        # Ensure we search for the base name without extensions (fixes Wheel/media detection)
         if name_to_search.lower().endswith(('.vpx', '.vpt', '.fpt')):
             name_to_search = os.path.splitext(name_to_search)[0]
-        elif name_to_search.lower().endswith(('vpx', 'vpt', 'fpt')):
-            name_to_search = name_to_search[:-3]
         
         name_to_search = name_to_search.strip()
 
