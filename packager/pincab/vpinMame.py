@@ -324,6 +324,19 @@ class VPinMame:
                 s = os.path.join(vpm_stage, item)
                 d = os.path.normpath(os.path.join(self.baseModel.visual_pinball_path, "VPinMAME", item))
                 if os.path.isdir(s):
+                    if item == 'Config':
+                        # Drop the 'Config' staging folder and merge contents directly into VPinMAME root
+                        self.logger.info("+ Processing Config overrides from package (merging into VPinMAME root)")
+                        for cfg_item in os.listdir(s):
+                            s_file = os.path.join(s, cfg_item)
+                            d_file = os.path.normpath(os.path.join(self.baseModel.visual_pinball_path, "VPinMAME", cfg_item))
+                            if cfg_item == 'DmdDevice.ini':
+                                self.merge_dmd_ini(s_file, d_file)
+                            elif cfg_item == 'VPMAlias.txt':
+                                self.merge_alias_file(s_file, d_file)
+                            else:
+                                shutil.copy2(s_file, d_file)
+                        continue
                     copytree(self.logger, s, d)
                 elif os.path.isfile(s):
                     if item == 'DmdDevice.ini':
