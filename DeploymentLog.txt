@@ -43,3 +43,31 @@ DEPLOYMENT: Halloween (Original 2022) TerryRed 1.9 MOD (2026-06-03T12:45:36.4160
 2026-06-03 20:45:05,383 [Thread-1    ] [INFO ]      ++ Sliced DmdDevice.ini section for: halloween (original 2022) terryred 1.9 mod
 2026-06-03 20:45:05,384 [Thread-1    ] [INFO ]  * Bundling session log: C:\Users\DAVID\AppData\Local\Temp\tablePackager.log
 2026-06-03 20:45:05,385 [Thread-1    ] [INFO ]  + add 'C:\Users\DAVID\AppData\Local\Temp\tablePackager.log' -> 'future pinball/logs/Log.txt'
+
+
+============================================================
+DEPLOYMENT: Harley Dark (Original 2026) (2026-06-04T13:09:29.519521+00:00)
+============================================================
+2026-06-04 21:08:28,165 [MainThread  ] [INFO ]  Starting
+2026-06-04 21:08:28,165 [MainThread  ] [INFO ]  Started
+2026-06-04 21:08:28,169 [MainThread  ] [INFO ]  Reading VPS puplookup.csv Database
+2026-06-04 21:08:28,216 [MainThread  ] [INFO ]  Successfully loaded 2631 table indices from CSV configuration.
+2026-06-04 21:08:28,341 [MainThread  ] [INFO ]  Scanning for Visual Pinball tables...
+2026-06-04 21:08:45,214 [Thread-1    ] [INFO ]  Begin Extraction
+2026-06-04 21:08:45,218 [Thread-1    ] [INFO ]  --[Working on 'Harley Dark (Original 2026) Tony Fox MOD 1.0']------------------
+2026-06-04 21:08:45,233 [Thread-1    ] [INFO ]  -- No existing manifest found at ./installed, starting fresh.
+2026-06-04 21:08:45,233 [Thread-1    ] [INFO ]  * Visual Pinball X files
+2026-06-04 21:08:45,465 [Thread-1    ] [INFO ]  + rom/table names are ['HARLEYDARK', 'Harley Dark (Original 2026) Tony Fox MOD 1.0']
+2026-06-04 21:08:45,466 [Thread-1    ] [INFO ]  + add 'C:\vPinball\VisualPinball\tables\Harley Dark (Original 2026) Tony Fox MOD 1.0.vpx' -> 'visual pinball/tables/Harley Dark (Original 2026) Tony Fox MOD 1.0.vpx'
+2026-06-04 21:08:45,493 [Thread-1    ] [WARNI]  * no directb2s found
+2026-06-04 21:08:45,494 [Thread-1    ] [INFO ]  ++ Found custom table override screen profile: Harley Dark (Original 2026) Tony Fox MOD 1.0.res
+2026-06-04 21:08:45,494 [Thread-1    ] [INFO ]  + add 'C:\vPinball\VisualPinball\tables\Harley Dark (Original 2026) Tony Fox MOD 1.0.res' -> 'visual pinball/tables/Harley Dark (Original 2026) Tony Fox MOD 1.0.res'
+2026-06-04 21:08:45,498 [Thread-1    ] [INFO ]  + add 'C:\vPinball\VisualPinball\tables\Harley Dark (Original 2026) Tony Fox MOD 1.0.ini' -> 'visual pinball/tables/Harley Dark (Original 2026) Tony Fox MOD 1.0.ini'
+2026-06-04 21:08:45,502 [Thread-1    ] [INFO ]  + Found B2STableSettings entry for: HARLEYDARK
+2026-06-04 21:08:45,502 [Thread-1    ] [INFO ]  + Explicitly adding C:\Users\DAVID\AppData\Local\Temp\B2S_Harley Dark (Original 2026) Tony Fox MOD 1.0.xml to ZIP
+2026-06-04 21:08:45,503 [Thread-1    ] [INFO ]  + add 'C:\Users\DAVID\AppData\Local\Temp\B2S_Harley Dark (Original 2026) Tony Fox MOD 1.0.xml' -> 'visual pinball/tables/B2STableSettings.xml'
+2026-06-04 21:08:45,506 [Thread-1    ] [INFO ]  --------------------------------------------------
+2026-06-04 21:08:45,506 [Thread-1    ] [INFO ]  * [AUDIO SCAN] Checking table script for external music...
+2026-06-04 21:08:45,706 [Thread-1    ] [INFO ]  - No external background music (.mp3/.ogg) found in this table.
+2026-06-04 21:08:45,706 [Thread-1    ] [INFO ]  * Bundling session log: C:\Users\DAVID\AppData\Local\Temp\tablePackager.log
+2026-06-04 21:08:45,707 [Thread-1    ] [INFO ]  + add 'C:\Users\DAVID\AppData\Local\Temp\tablePackager.log' -> 'visual pinball/logs/Log.txt'

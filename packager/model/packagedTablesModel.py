@@ -108,7 +108,8 @@ class PackagedTablesModel(Observable):
                 # Append the session logs captured inside the package to the global log
                 possible_logs = [
                     os.path.join(self.baseModel.tmp_path, packageInfo['name'], 'logs', 'Log.txt'),
-                    os.path.join(self.baseModel.tmp_path, packageInfo['name'], 'future pinball', 'logs', 'Log.txt')
+                    os.path.join(self.baseModel.tmp_path, packageInfo['name'], 'future pinball', 'logs', 'Log.txt'),
+                    os.path.join(self.baseModel.tmp_path, packageInfo['name'], 'visual pinball', 'logs', 'Log.txt')
                 ]
                 
                 for log_src in [os.path.normpath(p) for p in possible_logs if os.path.exists(p)]:
