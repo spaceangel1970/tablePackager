@@ -276,6 +276,25 @@ class FuturePinball:
                     if dir_path.exists() and not any(dir_path.iterdir()):
                         dir_path.rmdir()
 
+        # Normalize the package name for the final ZIP archive to enable update overwrites.
+        # This strips version and mod information that follows the year anchor.
+        full_name = package.name
+        stripped_name = full_name
+        if stripped_name.lower().endswith(('.fpt')):
+            stripped_name = os.path.splitext(stripped_name)[0]
+
+        # Use Year-in-Parentheses as the anchor to strip trailing metadata
+        match = re.search(r'^(.*?\s*\([^)]*[12][0-9]{3}[^)]*\))', stripped_name)
+        if match:
+            stripped_name = match.group(1).strip()
+        else:
+            # Fallback: strip standard trailing version markers
+            stripped_name = re.sub(r'\s+(?:v?)(?:\d+(?:\.\d+)*)(?:\s*VR)?\s*$', '', stripped_name, flags=re.IGNORECASE).strip()
+
+        if full_name != stripped_name:
+            self.logger.info(f"* Normalizing package: '{full_name}' -> '{stripped_name}'")
+            package.rename_package(stripped_name)
+
         self.logger.info(f"*** Finished processing Future Pinball assets for: {package.name} ***")
         self.logger.info("--------------------------------------------------")
 

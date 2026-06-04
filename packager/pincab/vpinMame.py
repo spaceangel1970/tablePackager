@@ -23,6 +23,14 @@ class VPinMame:
             stripped_name = os.path.splitext(stripped_name)[0]
 
         stripped_name = stripped_name.strip()
+
+        # 1. Capture everything up to the year in parentheses (standard pincab naming anchor)
+        # e.g. "Harley Dark (Original 2026) Tony Fox MOD 1.0" -> "Harley Dark (Original 2026)"
+        match = re.search(r'^(.*?\s*\([^)]*[12][0-9]{3}[^)]*\))', stripped_name)
+        if match:
+            stripped_name = match.group(1).strip()
+
+        # 2. Fallback: strip standard trailing version markers if no year-in-parentheses is found
         stripped_name = re.sub(r'\s+(?:v?)(?:\d+(?:\.\d+)*)(?:\s*VR)?\s*$', '', stripped_name, flags=re.IGNORECASE)
         return stripped_name.strip()
 

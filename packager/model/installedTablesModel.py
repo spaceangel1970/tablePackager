@@ -86,21 +86,12 @@ class InstalledTablesModel(Observable):
         extract_thread.start()
 
     def extract_tables_begin(self, context=None) -> bool:
-        to_overwrite = False
         if not self.__selectedTable:  # empty selection
             raise ValueError('No selected table')
 
         self.baseModel.logger.info("Begin Extraction")
         for table in self.__selectedTable:
             try:
-                # check if table is already a package
-                if Path(self.baseModel.package_path + '/' + table['name'] + self.baseModel.package_extension).exists():
-                    if (is_read_only_file(
-                            self.baseModel.package_path + '/' + table['name'] + self.baseModel.package_extension)):
-                        result = messagebox.showerror("Extraction",
-                                                      "A protected table package already exist.");
-                        continue
-                    to_overwrite = True
                 clean_dir(self.baseModel.tmp_path)
                 self.logger.info("--[Working on '%s']------------------" % (table['name']))
 
@@ -131,11 +122,19 @@ class InstalledTablesModel(Observable):
                 package.save()
                 package.pack()  # zip package
 
-                if to_overwrite:
-                    os.remove(self.baseModel.package_path + '/' + table['name'] + self.baseModel.package_extension)
+                # Use the final package name (normalized) for destination operations
+                final_name = package.name + self.baseModel.package_extension
+                dest_path = os.path.normpath(os.path.join(self.baseModel.package_path, final_name))
+                src_path = os.path.normpath(os.path.join(self.baseModel.tmp_path, final_name))
 
-                shutil.move(self.baseModel.tmp_path + '/' + table['name'] + self.baseModel.package_extension,
-                            self.baseModel.package_path)
+                if os.path.exists(dest_path):
+                    if is_read_only_file(dest_path):
+                        self.logger.error(f"Cannot overwrite protected package: {final_name}")
+                        continue
+                    self.logger.info(f"Overwriting existing package: {final_name}")
+                    os.remove(dest_path)
+
+                shutil.move(src_path, self.baseModel.package_path)
 
             except Exception as e:
                 import traceback
