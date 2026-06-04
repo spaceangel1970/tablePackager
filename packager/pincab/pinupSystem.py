@@ -31,6 +31,15 @@ class PinUpSystem:
 
     def extract_file(self, package: Package, product: str, media, dataPath, extension='', search_name=None) -> None:
         name_to_search = search_name if search_name else package.name
+
+        # Ensure we search for the base name without extensions (fixes Wheel/media detection) (handle dot or no dot)
+        if name_to_search.lower().endswith(('.vpx', '.vpt', '.fpt')):
+            name_to_search = os.path.splitext(name_to_search)[0]
+        elif name_to_search.lower().endswith(('vpx', 'vpt', 'fpt')):
+            name_to_search = name_to_search[:-3]
+        
+        name_to_search = name_to_search.strip()
+
         for file in Path(
                 self.baseModel.pinupSystem_path + "/POPMedia/" + self.get_product_path(product) + '/' + media)\
                 .glob('**/%s%s*' % (name_to_search, extension)):
@@ -93,16 +102,13 @@ class PinUpSystem:
 
                         self.logger.info(f"++ Found active local PuP folder matching ROM: '{rom}'")
 
-                        destination_pup_dir = os.path.join(package.directory, package.name, 'media', 'PuP', rom)
-
-                        self.logger.info(f"+ Copying raw PuP folder contents quietly -> 'media/PuP/{rom}/'")
-
-                        if os.path.exists(destination_pup_dir):
-                            shutil.rmtree(destination_pup_dir)
-
-                        shutil.copytree(target_pup_folder, destination_pup_dir)
-                        self.logger.info(f"++ Raw PuP pack files mirrored safely to package staging workspace.")
-                        
+                        self.logger.info(f"+ Indexing raw PuP folder contents -> 'media/PuP/{rom}/'")
+                        for file_path in Path(target_pup_folder).glob('**/*'):
+                            if file_path.is_file():
+                                rel_path = file_path.relative_to(Path(target_pup_folder))
+                                # Use the standard manifest system to track files for UI visibility
+                                package.add_file(file_path, 'media/PuP', dst_file=f"{rom}/{rel_path.as_posix()}")
+                        self.logger.info(f"++ Raw PuP pack files indexed and mirrored safely.")
         except Exception as e:
             self.logger.error(f"Error copying local loose PuP folder assets: {e}")
 

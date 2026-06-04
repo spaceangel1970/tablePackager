@@ -32,15 +32,23 @@ class VisualPinball:
         if not os.path.exists(self.visual_pinball_path):
             raise ValueError('Visual Pinball not found(%s)' % self.visual_pinball_path)
 
-        vpx_file = Path(self.visual_pinball_path + '/tables/' + table_name + '.vpx')
-        vpt_file = Path(self.visual_pinball_path + '/tables/' + table_name + '.vpt')
+        # Normalize table name: strip extension more robustly (handle dot or no dot)
+        table_stem = table_name
+        if table_stem.lower().endswith(('.vpx', '.vpt')):
+            table_stem = os.path.splitext(table_stem)[0]
+        elif table_stem.lower().endswith(('vpx', 'vpt')):
+            table_stem = table_stem[:-3]
+        table_stem = table_stem.strip()
+
+        vpx_file = Path(self.visual_pinball_path + '/tables/' + table_stem + '.vpx')
+        vpt_file = Path(self.visual_pinball_path + '/tables/' + table_stem + '.vpt')
 
         if os.path.exists(vpx_file):
             vp_file = vpx_file
         elif os.path.exists(vpt_file):
             vp_file = vpt_file
         else:
-            raise ValueError('table not found (%s) (vpt or vpx)' % self.visual_pinball_path + '/tables/' + package.name)
+            raise ValueError('table not found (%s) (vpt or vpx)' % self.visual_pinball_path + '/tables/' + table_stem)
         return self.extract_rom_name(vp_file)
     
     def is_pup_pack_empty(self, pup_path: str) -> bool:
@@ -58,18 +66,27 @@ class VisualPinball:
             raise ValueError('Visual Pinball not found(%s)' % self.visual_pinball_path)
 
         self.logger.info("* Visual Pinball X files")
-        vpx_file = Path(self.visual_pinball_path + '/tables/' + package.name + '.vpx')
-        ini_file = Path(self.visual_pinball_path + '/tables/' + package.name + '.ini')
-        pov_file = Path(self.visual_pinball_path + '/tables/' + package.name + '.pov')
-        vpt_file = Path(self.visual_pinball_path + '/tables/' + package.name + '.vpt')
-        directb2s_file = Path(self.visual_pinball_path + "/tables/" + vpx_file.stem + '.directb2s')
+
+        # Normalize table name: strip extension more robustly (handle dot or no dot)
+        table_stem = package.name
+        if table_stem.lower().endswith(('.vpx', '.vpt')):
+            table_stem = os.path.splitext(table_stem)[0]
+        elif table_stem.lower().endswith(('vpx', 'vpt')):
+            table_stem = table_stem[:-3]
+        table_stem = table_stem.strip()
+
+        vpx_file = Path(self.visual_pinball_path + '/tables/' + table_stem + '.vpx')
+        ini_file = Path(self.visual_pinball_path + '/tables/' + table_stem + '.ini')
+        pov_file = Path(self.visual_pinball_path + '/tables/' + table_stem + '.pov')
+        vpt_file = Path(self.visual_pinball_path + '/tables/' + table_stem + '.vpt')
+        directb2s_file = Path(self.visual_pinball_path + "/tables/" + table_stem + '.directb2s')
 
         if os.path.exists(vpx_file):
             vp_file = vpx_file
         elif os.path.exists(vpt_file):
             vp_file = vpt_file
         else:
-            raise ValueError('table not found (%s) (vpt or vpx)' % self.visual_pinball_path + '/tables/' + package.name)
+            raise ValueError('table not found (%s) (vpt or vpx)' % self.visual_pinball_path + '/tables/' + table_stem)
 
         rom = self.extract_rom_name(vp_file)
         script_names = self.extract_table_name(vp_file)
@@ -87,8 +104,8 @@ class VisualPinball:
 
         # Always include the package name (filename) as a lookup candidate.
         # Many modern tables and "Originals" index settings by filename rather than ROM.
-        if package.name and package.name not in rom_candidates:
-            rom_candidates.append(package.name)
+        if table_stem and table_stem not in rom_candidates:
+            rom_candidates.append(table_stem)
 
         self.logger.info(f"+ rom/table names are {rom_candidates}")
         package.set_field('visual pinball/info/romName', rom_candidates)
@@ -124,19 +141,6 @@ class VisualPinball:
 
         self._extract_b2s_table_settings(package, rom_candidates)
 
-        # Logic for PUP packs
-        pup_pack_path = os.path.join(self.visual_pinball_path, "PUPVideos", package.name)
-        
-        if not self.is_pup_pack_empty(pup_pack_path):
-            self.logger.info(f"+ Found valid PUP pack: {package.name}")
-            for file_path in Path(pup_pack_path).glob('**/*'):
-                if file_path.is_file():
-                    rel_path = file_path.relative_to(Path(pup_pack_path))
-                    package.add_file(file_path, f"visual pinball/PUPVideos/{package.name}", 
-                                     dst_file=str(rel_path).replace('\\', '/'))
-        else:
-            self.logger.info(f"- Ignoring PUP pack: {package.name} (Folder is empty or missing)")
-
         # --- DYNAMIC MUSIC SCANNING ENGINE ---
         self.logger.info("--------------------------------------------------")
         self.logger.info("* [AUDIO SCAN] Checking table script for external music...")
@@ -145,11 +149,6 @@ class VisualPinball:
         music_base_dir = os.path.join(self.visual_pinball_path, "Music")
         
         if found_music_tracks:
-            # Re-verify the list type before looping
-            vp_data = package.manifest.content['visual pinball']
-            if not isinstance(vp_data.get('Music'), list):
-                vp_data['Music'] = []
-            
             self.logger.info(f"+ Found {len(found_music_tracks)} track references...")
             
             from datetime import datetime, timezone
@@ -157,46 +156,19 @@ class VisualPinball:
             clean_iso_timestamp = f"{now.year:04d}-{now.month:02d}-{now.day:02d}T{now.hour:02d}:{now.minute:02d}:{now.second:02d}.{now.microsecond:06d}+0000"
             
             packed_count = 0
-            added_folders = set()
             
             for track_path in found_music_tracks:
                 safe_track_path = track_path.replace('\\', '/')
                 full_music_path = Path(os.path.normpath(os.path.join(music_base_dir, track_path)))
                 
                 if full_music_path.exists() and full_music_path.is_file():
-                    # 1. HANDLE FOLDER METADATA (So the UI knows it's a folder)
-                    folder_name = os.path.dirname(safe_track_path)
-                    if folder_name and folder_name not in added_folders:
-                        vp_data['Music'].append({
-                            'folder': {
-                                'path': f"visual pinball/Music/{folder_name}",
-                                'name': folder_name
-                            }
-                        })
-                        added_folders.add(folder_name)
-
-                    # 2. HANDLE FILE METADATA
-                    archive_dest_path = f"visual pinball/Music/{safe_track_path}"
-                    
-                    vp_data['Music'].append({
-                        'file': {
-                            'name': full_music_path.name,
-                            'path': archive_dest_path, 
-                            'size': full_music_path.stat().st_size,
-                            'lastmod': clean_iso_timestamp,
-                            'author(s)': '', 'version': '', 'url': '', 'md5': ''
-                        }
-                    })
-
-                    # 3. FIX THE PHYSICAL EXTRACTION PATH
-                    physical_dest = os.path.join(self.baseModel.tmp_path, package.name, "visual pinball", "Music", safe_track_path)
-                    os.makedirs(os.path.dirname(physical_dest), exist_ok=True)
-                    
+                    # Store all music files directly under 'visual pinball/Music'
+                    # The dst_file will include any subfolders from track_path
                     try:
-                        shutil.copy2(str(full_music_path), physical_dest)
+                        package.add_file(full_music_path, 'visual pinball/Music', dst_file=safe_track_path)
                         packed_count += 1
                     except Exception as e:
-                        self.logger.error(f"Failed to copy '{full_music_path}' to '{physical_dest}': {e}")
+                        self.logger.error(f"Failed to add music file '{full_music_path}' to package: {e}")
                 else:
                     self.logger.warning(f"  ! MISSING ON DISK: '{track_path}' (Expected in: {music_base_dir})")
             
@@ -208,7 +180,7 @@ class VisualPinball:
         log_path = os.path.join(tempfile.gettempdir(), 'tablePackager.log')
         if os.path.exists(log_path):
             self.logger.info(f"* Bundling session log: {log_path}")
-            package.add_file(log_path, 'logs', dst_file='Log.txt')
+            package.add_file(log_path, 'visual pinball/logs', dst_file='Log.txt')
             
         # Cleanup empty folders in the staging area for a cleaner ZIP
         package_root = Path(package.directory) / package.name

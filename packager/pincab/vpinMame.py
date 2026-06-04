@@ -17,7 +17,16 @@ class VPinMame:
     def _strip_package_version(self, table_name: str) -> str:
         if not table_name:
             return table_name
-        stripped_name = re.sub(r'\s+(?:v?)(?:\d+(?:\.\d+)*)(?:\s*VR)?\s*$', '', table_name, flags=re.IGNORECASE)
+        # Clean extensions if present before stripping version markers
+        stripped_name = table_name
+        if stripped_name.lower().endswith(('.vpx', '.vpt', '.fpt')):
+            stripped_name = os.path.splitext(stripped_name)[0]
+        elif stripped_name.lower().endswith(('vpx', 'vpt', 'fpt')):
+            # Handle cases where extension is present without the leading dot
+            stripped_name = stripped_name[:-3]
+
+        stripped_name = stripped_name.strip()
+        stripped_name = re.sub(r'\s+(?:v?)(?:\d+(?:\.\d+)*)(?:\s*VR)?\s*$', '', stripped_name, flags=re.IGNORECASE)
         return stripped_name.strip()
 
     def _dmd_ini_header_candidates(self, package: Package, rom: str) -> list:
@@ -126,15 +135,18 @@ class VPinMame:
                     
                     if captured_alias_lines:
                         self.logger.info(f"++ Slicing out exact active VPMAlias routing line for [{rom}]")
-                        dest_alias_dir = os.path.join(package.directory, package.name, 'VPinMAME')
-                        os.makedirs(dest_alias_dir, exist_ok=True)
-                        dest_alias_file = os.path.normpath(os.path.join(dest_alias_dir, 'VPMAlias.txt'))
-                        
-                        with open(dest_alias_file, 'w', encoding='utf-8') as f_out:
-                            f_out.writelines(captured_alias_lines)
-                        
-                        self.logger.info(f"++ Cleanly wrote exact single line to staging folder.")
-                        alias_processed = True
+                        tmp_alias = None
+                        try:
+                            tmp_handle = tempfile.NamedTemporaryFile(delete=False, suffix='.txt')
+                            tmp_alias = tmp_handle.name
+                            tmp_handle.close()
+                            with open(tmp_alias, 'w', encoding='utf-8') as f_out:
+                                f_out.writelines(captured_alias_lines)
+                            package.add_file(tmp_alias, 'VPinMAME/Config', dst_file='VPMAlias.txt')
+                            alias_processed = True
+                        finally:
+                            if tmp_alias and os.path.exists(tmp_alias):
+                                os.remove(tmp_alias)
                         
                 except Exception as e:
                     self.logger.error(f"[Alias LOG] Error handling alias extraction: {str(e)}")
@@ -196,15 +208,18 @@ class VPinMame:
                     if captured_lines:
                         header_name = matched_header.strip('[]') if matched_header else rom
                         self.logger.info(f"++ Slicing out custom DMD profile details for [{header_name}] mapped to [{primary_table_rom}]")
-                        dest_ini_dir = os.path.join(package.directory, package.name, 'VPinMAME')
-                        os.makedirs(dest_ini_dir, exist_ok=True)
-                        dest_ini_file = os.path.normpath(os.path.join(dest_ini_dir, 'DmdDevice.ini'))
-                        
-                        with open(dest_ini_file, 'w', encoding='utf-8') as f_out:
-                            f_out.writelines(captured_lines)
-                        
-                        self.logger.info(f"++ Cleanly wrote sliced DmdDevice.ini directly to staging folder.")
-                        custom_dmd_processed = True
+                        tmp_ini = None
+                        try:
+                            tmp_handle = tempfile.NamedTemporaryFile(delete=False, suffix='.ini')
+                            tmp_ini = tmp_handle.name
+                            tmp_handle.close()
+                            with open(tmp_ini, 'w', encoding='utf-8') as f_out:
+                                f_out.writelines(captured_lines)
+                            package.add_file(tmp_ini, 'VPinMAME/Config', dst_file='DmdDevice.ini')
+                            custom_dmd_processed = True
+                        finally:
+                            if tmp_ini and os.path.exists(tmp_ini):
+                                os.remove(tmp_ini)
                         
                 except Exception as e:
                     self.logger.error(f"[DMD LOG] Error handling custom profile extraction: {str(e)}")
