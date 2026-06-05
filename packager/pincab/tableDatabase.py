@@ -17,17 +17,41 @@ class TableDatabase:
     def __init__(self, logger, baseModel) -> None:
         self.__baseModel = baseModel
         self.__logger = logger
-        # Fixed: Using raw strings (r'...') to eliminate the syntax warnings
+        
+        # Regex patterns
         self.__re_extract_year = re.compile(r'.*, (?P<year>\d+)')
         self.__re_extract_trade_name = re.compile(r'.*\[Trade Name: (?P<name>.+)\]')
+        
         self.__manufacturer_db = Manufacturer(baseModel.config)
-        self.__dbPath = baseModel.config.get('db_path')
-        self.__manufacturer_dbPath = baseModel.config.get('manufacturer_path')
+        
+        # --- FIXED PATHS ---
+        # Instead of getting db_path from config (which points to Program Files), 
+        # we construct the path using the new package_path property in AppData
+        self.__dbPath = os.path.join(self.__baseModel.package_path, 'puplookup.csv')
+        self.__manufacturer_dbPath = os.path.join(self.__baseModel.package_path, 'manufacturers.csv')
 
         self.__lock = threading.Lock()
         self.__data = {}
         self.__statistics = Statistics()
+        
+        # Ensure files exist before loading
+        if not os.path.exists(self.__dbPath):
+            # Create an empty file if it doesn't exist
+            with open(self.__dbPath, 'w', encoding='utf-8') as f:
+                pass
+                
         self.load()
+
+    def update_csv(self, data):
+        """Helper to save the database safely to the AppData path"""
+        with self.__lock:
+            try:
+                with open(self.__dbPath, 'w', newline='', encoding='utf-8') as f:
+                    writer = csv.writer(f)
+                    writer.writerows(data)
+                self.__logger.info(f"Database successfully updated at: {self.__dbPath}")
+            except Exception as e:
+                self.__logger.error(f"Error writing database to {self.__dbPath}: {e}")
 
     @property
     def logger(self):

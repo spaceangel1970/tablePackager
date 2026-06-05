@@ -1,0 +1,5 @@
+2026-06-05 20:46:34,410 [MainThread  ] [INFO ]  Starting. Data Directory: C:\Users\DAVID\Documents\tablePackager
+2026-06-05 20:46:34,411 [MainThread  ] [INFO ]  Started
+2026-06-05 20:46:34,414 [MainThread  ] [INFO ]  Reading VPS puplookup.csv Database
+2026-06-05 20:46:34,460 [MainThread  ] [INFO ]  Successfully loaded 2631 table indices from CSV configuration.
+2026-06-05 20:46:34,982 [MainThread  ] [INFO ]  Scanning for Visual Pinball tables...

@@ -1,5 +1,7 @@
 import sys
+import os
 import csv
+import logging
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -23,7 +25,11 @@ from packager.pincab.pupScanner import PupScanner
 from packager.pincab.futurePinball import FuturePinball
 
 class BaseModel:
-    def __init__(self, logger: logging, version: str, package_version: str) -> None:
+    # Update the constructor to accept the passed data_dir
+    def __init__(self, logger: logging, version: str, package_version: str, data_dir: str) -> None:
+        self.__logger = logger
+        
+        # Determine the base directory logic
         if Path(os.getcwd()).name == 'packager':  # running from IDE
             self.__base_dir = ''
         else:  # running from exe
@@ -32,11 +38,19 @@ class BaseModel:
         self.__config = Config()
         self.__version = version
         self.__package_version = package_version
-        self.__tmp_path = self.__config.get('working_dir') + '/tmp'
-        self.__package_path = self.__config.get('working_dir') + '/packages'
-        self.__installed_path = self.__config.get('working_dir') + '/installed'
-        self.__logger = logger
-
+        
+        # --- PATH UPDATES ---
+        # Instead of using self.__config.get('working_dir'), which likely points to Program Files,
+        # we now join the paths with your new data_dir (the AppData path)
+        self.__tmp_path = os.path.join(data_dir, 'tmp')
+        self.__package_path = os.path.join(data_dir, 'packages')
+        self.__installed_path = os.path.join(data_dir, 'installed')
+        
+        # Ensure these directories exist in AppData
+        for path in [self.__tmp_path, self.__package_path, self.__installed_path]:
+            os.makedirs(path, exist_ok=True)
+            
+        # ... (rest of your initializations)
         self.__installedTablesModel = InstalledTablesModel(self)
         self.__packagedTablesModel = PackagedTablesModel(self)
         self.__packageEditorModel = PackageEditorModel(self)
