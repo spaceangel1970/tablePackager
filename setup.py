@@ -75,6 +75,7 @@ setup(name='tablePackager',
       options={ 'build_exe': { 'include_msvcr' : True,
                                'include_files': include_files},
                 'bdist_msi': {'target_name': f'tablePackager-{version}-{arch}.msi',
+                              'initial_target_dir': f'[ProgramFilesFolder]\\TablePackager',
                               'data': {'Shortcut': shortcut_table},
                               'install_icon' : 'packager/images/tablePackager_128x128.ico',
                               'upgrade_code': '{006d3301-d595-49e5-81d0-4a906aa48bb8}', # required for msi upgrade
