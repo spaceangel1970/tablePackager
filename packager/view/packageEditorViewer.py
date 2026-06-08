@@ -322,7 +322,7 @@ class PackageEditorViewer(Frame, Observer):
                 self.__btRotateRight['state'] = 'disable'
                 self.__btRotateLeft['state'] = 'disable'
         else:
-            if 'file' in item['tags'] or 'category' in item['tags'] or any(k in item['tags'] for k in ['UltraDMD', 'FlexDMD']):
+            if 'file' in item['tags'] or 'category' in item['tags'] or any(k in item['tags'] for k in ['UltraDMD', 'FlexDMD', 'Music', 'PuP']):
                 if self.__btProtectedState.get() == 'False':
                     self.__btAddFile['state'] = 'normal'
                     
@@ -339,7 +339,12 @@ class PackageEditorViewer(Frame, Observer):
                     self.__btAddFile['state'] = 'disable'
             if 'product' in item['tags'] or 'category' in item['tags']:
                 if self.__btProtectedState.get() == 'False':
-                    self.__btDelFile['state'] = 'disable'
+                    # Allow deletion for specific asset categories (including root PuP/Music folders for clearing)
+                    if 'category' in item['tags'] and any(k in item['tags'][-1] for k in ['FlexDMD', 'UltraDMD', 'PuP', 'Music', 'altcolor', 'altsound']):
+                        self.__btDelFile['state'] = 'normal'
+                    else:
+                        self.__btDelFile['state'] = 'disable'
+
                     self.__btRenameFile['state'] = 'disable'
                     self.__btUpFile['state'] = 'disable'
                     self.__btDownFile['state'] = 'disable'
@@ -383,6 +388,24 @@ class PackageEditorViewer(Frame, Observer):
             if ultraDMDDir:
                 self.__packageEditorModel.add_ultradmd(self.__topLevel, item['tags'][-1], ultraDMDDir)
                 self.__last_dir = ultraDMDDir
+            return
+
+        if 'visual pinball/Music' in item['tags']:
+            music_dir = filedialog.askdirectory(parent=self.__topLevel,
+                                                initialdir=self.__last_dir,
+                                                title="Select Music Folder")
+            if music_dir:
+                self.__packageEditorModel.add_music_folder(self.__topLevel, item['tags'][-1], music_dir)
+                self.__last_dir = music_dir
+            return
+
+        if 'media/PuP' in item['tags']:
+            pup_dir = filedialog.askdirectory(parent=self.__topLevel,
+                                              initialdir=self.__last_dir,
+                                              title="Select PuP Pack Folder")
+            if pup_dir:
+                self.__packageEditorModel.add_pup_pack_folder(self.__topLevel, item['tags'][-1], pup_dir)
+                self.__last_dir = pup_dir
             return
 
         if 'FlexDMD' in item['tags']:

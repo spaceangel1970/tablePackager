@@ -158,6 +158,34 @@ class PackageEditorModel(Observable):
                 self.package.add_file(str(file), dst_field)
         self.update_package()
 
+    def add_music_folder(self, viewer, dataPath, src_dir):
+        self.logger.info("* Music files")
+
+        music_folder_name = str(Path(src_dir).name)
+        # No specific manifest field to set for the music folder itself,
+        # as music files are typically listed directly or within subfolders.
+        for file in Path(src_dir).glob('**/*'):
+            if file.is_file():
+                rel_path = file.relative_to(src_dir)
+                # dst_field is the category path (e.g., 'visual pinball/Music')
+                # dst_file includes the folder name and relative path within that folder
+                self.package.add_file(str(file), dataPath, dst_file=f"{music_folder_name}/{rel_path.as_posix()}")
+        self.update_package()
+
+    def add_pup_pack_folder(self, viewer, dataPath, src_dir):
+        self.logger.info("* PuP Pack files")
+
+        pup_folder_name = str(Path(src_dir).name)
+        # You might want to set a manifest field here if you need to track the main PUP folder name
+        # e.g., self.package.set_field('media/PuP/main_folder', pup_folder_name)
+        for file in Path(src_dir).glob('**/*'):
+            if file.is_file():
+                rel_path = file.relative_to(src_dir)
+                # dst_field is the category path (e.g., 'media/PuP')
+                # dst_file includes the folder name and relative path within that folder
+                self.package.add_file(str(file), dataPath, dst_file=f"{pup_folder_name}/{rel_path.as_posix()}")
+        self.update_package()
+
     def scan_pup_for_table(self):
         table_name = self.package.get_field('info/table name')
         if not table_name:
@@ -174,8 +202,10 @@ class PackageEditorModel(Observable):
             filename = Path(srcFile).name
             target_file = filename
 
-            # Music, Audio, FlexDMD, and UltraDMD assets must keep their original names for script compatibility.
-            if any(k in data_path for k in ['Music', 'Audio', 'FlexDMD', 'UltraDMD']):
+            # Music, FlexDMD, UltraDMD, and PuP assets must keep their original names for script compatibility.
+            # Other POPMedia assets (media/ excluding PuP) must always be renamed to match the package name
+            # for proper front-end linking.
+            if any(k in data_path for k in ['Music', 'FlexDMD', 'UltraDMD', 'PuP']):
                 rename_it = False
             else:
                 if type(required_name) is list:

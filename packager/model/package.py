@@ -220,6 +220,22 @@ class Manifest:
             return True
         return False
 
+    def del_field_by_path(self, field_path: str) -> bool:
+        content = self.__content
+        normalized_path = field_path.replace('PuP Pack', 'PuP')
+        field_list = [f for f in normalized_path.split('/') if f]
+        
+        for field in field_list[:-1]:
+            if field in content:
+                content = content[field]
+            else:
+                return False
+        
+        if field_list[-1] in content:
+            del content[field_list[-1]]
+            return True
+        return False
+
     def add_file_info(self, field_path: str, file: dict):
         normalized_path = field_path.replace('PuP Pack', 'PuP')
         field_list = [f for f in normalized_path.split('/') if f]
@@ -650,8 +666,32 @@ class Package:
     def remove_file(self, src_file: str, field_path: str):
         self.logger.info("+ remove '%s'" % (field_path + '/' + src_file))
         try:
-            os.unlink(self.directory + '/' + self.name + '/' + field_path + '/' + src_file)
-            self.manifest.del_file(field_path, src_file)
+            # Determine the actual path on disk. 
+            # For directory deletions (Category nodes), field_path already includes the folder name (src_file).
+            # We check for this overlap to prevent constructing a doubled path.
+            is_category_node = field_path.endswith(src_file)
+            if is_category_node:
+                full_path = os.path.normpath(os.path.join(self.directory, self.name, field_path))
+            else:
+                full_path = os.path.normpath(os.path.join(self.directory, self.name, field_path, src_file))
+
+            # Check if we are deleting a directory (Category folder) or a file
+            if os.path.isdir(full_path):
+                shutil.rmtree(full_path)
+                if is_category_node:
+                    # Deleting a whole category branch. 
+                    # Protect root categories from being removed from manifest entirely; just empty them.
+                    if any(field_path.endswith(k) for k in ['PuP', 'Music', 'altcolor', 'altsound']):
+                        self.manifest.set_field(field_path, [])
+                    else:
+                        self.manifest.del_field_by_path(field_path)
+                else:
+                    # Deleting a directory virtualized as a file entry (e.g., a PuP Pack or Music folder)
+                    self.manifest.del_file(field_path, src_file)
+            else:
+                os.unlink(full_path)
+                self.manifest.del_file(field_path, src_file)
+            
             self.save()
         except OSError as e:
             self.logger.error(str(e))

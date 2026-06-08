@@ -1,27 +1,113 @@
-2026-06-08 15:24:22,808 [MainThread  ] [INFO ]  Starting. Data Directory: C:\Users\DAVID\Documents\tablePackager
-2026-06-08 15:24:22,809 [MainThread  ] [INFO ]  Started
-2026-06-08 15:24:22,811 [MainThread  ] [INFO ]  Reading VPS puplookup.csv Database
-2026-06-08 15:24:22,813 [MainThread  ] [INFO ]  Successfully loaded 0 table indices from CSV configuration.
-2026-06-08 15:24:23,654 [MainThread  ] [INFO ]  Scanning for Visual Pinball tables...
-2026-06-08 15:24:31,546 [MainThread  ] [INFO ]  --[New Package 'New_Table_Package']------------------
-2026-06-08 15:25:02,362 [MainThread  ] [INFO ]  --[Rename Package to 'Fireworks Mania(Original 2026)']----------
-2026-06-08 15:25:02,367 [Thread-1    ] [INFO ]  + rename directory  'New_Table_Package'
-2026-06-08 15:25:02,369 [Thread-1    ] [INFO ]  --[Rename 'Fireworks Mania(Original 2026)' Done]------------------
-2026-06-08 15:25:41,849 [MainThread  ] [INFO ]  + add 'C:/Users/DAVID/Downloads/Add to Cab/Fireworks Mania/Fireworks Mania.vpx' -> 'visual pinball/tables/Fireworks Mania(Original 2026).vpx'
-2026-06-08 15:25:43,229 [MainThread  ] [INFO ]  + updating rom name [['FireworksMania']]
-2026-06-08 15:26:03,345 [MainThread  ] [INFO ]  + add 'C:/Users/DAVID/Downloads/Add to Cab/Fireworks Mania/Fireworks Mania.directb2s' -> 'visual pinball/tables/Fireworks Mania(Original 2026).directb2s'
-2026-06-08 15:26:24,847 [MainThread  ] [INFO ]  + add 'C:/Users/DAVID/Downloads/Add to Cab/Fireworks Mania/Music/fireworksmania_endgame.mp3' -> 'visual pinball/Music/Fireworks Mania(Original 2026).mp3'
-2026-06-08 15:26:40,698 [MainThread  ] [INFO ]  + remove 'visual pinball/Music/Fireworks Mania(Original 2026).mp3'
-2026-06-08 15:28:16,331 [MainThread  ] [INFO ]  + add 'C:/Users/DAVID/Downloads/Add to Cab/Fireworks Mania/fireworksmania_wheel.png' -> 'media/Wheel/Fireworks Mania(Original 2026).png'
-2026-06-08 15:28:20,742 [MainThread  ] [INFO ]  --[Save Package]-----------------------
-2026-06-08 15:28:20,768 [Thread-2    ] [INFO ]  * packing table 'Fireworks Mania(Original 2026).zip'
-2026-06-08 15:28:26,555 [Thread-2    ] [INFO ]  --[Edition 'Fireworks Mania(Original 2026)' Done]------------------
-2026-06-08 15:28:39,617 [Thread-3    ] [INFO ]  --[Backup Package]------------------
-2026-06-08 15:28:39,618 [Thread-3    ] [INFO ]  + copy '/Fireworks Mania(Original 2026).zip' -> 'C:/Users/DAVID/OneDrive/Desktop'
-2026-06-08 15:28:39,653 [Thread-3    ] [INFO ]  --[Done]------------------
-2026-06-08 15:29:24,925 [MainThread  ] [INFO ]  --[Delete Package(s)]------------------
-2026-06-08 15:29:24,934 [MainThread  ] [INFO ]  + del C:\Users\DAVID\Documents\tablePackager\packages\Fireworks Mania(Original 2026).zip
-2026-06-08 15:29:24,934 [MainThread  ] [INFO ]  --[Done]------------------
-2026-06-08 15:29:28,985 [MainThread  ] [INFO ]  --[Delete Package(s)]------------------
-2026-06-08 15:29:28,988 [MainThread  ] [INFO ]  + del C:\Users\DAVID\Documents\tablePackager\packages\The Price is Right(Original).zip
-2026-06-08 15:29:28,988 [MainThread  ] [INFO ]  --[Done]------------------
+2026-06-09 06:57:39,888 [MainThread  ] [INFO ]  Starting. Data Directory: C:\Users\DAVID\Documents\tablePackager
+2026-06-09 06:57:39,889 [MainThread  ] [INFO ]  Started
+2026-06-09 06:57:39,891 [MainThread  ] [INFO ]  Reading VPS puplookup.csv Database
+2026-06-09 06:57:39,935 [MainThread  ] [INFO ]  Successfully loaded 2631 table indices from CSV configuration.
+2026-06-09 06:57:40,061 [MainThread  ] [INFO ]  Scanning for Visual Pinball tables...
+2026-06-09 06:57:43,485 [Thread-1    ] [INFO ]  --[Edit Package 'Fireworks Mania(Original 2026)']------------------
+2026-06-09 06:57:43,494 [Thread-1    ] [INFO ]  * unpack table 'Fireworks Mania(Original 2026).zip'
+2026-06-09 06:57:44,688 [Thread-1    ] [INFO ]  * Unpack Done
+2026-06-09 06:57:54,835 [MainThread  ] [INFO ]  + remove 'media/PuP/PuP'
+2026-06-09 06:58:21,569 [MainThread  ] [INFO ]  * PuP Pack files
+2026-06-09 06:58:21,571 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\normalize_and_resize.bat' -> 'media/PuP/OnlyFoolsandHorses/normalize_and_resize.bat'
+2026-06-09 06:58:21,575 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\PinUpPlayer.ini' -> 'media/PuP/OnlyFoolsandHorses/PinUpPlayer.ini'
+2026-06-09 06:58:21,578 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\playlists.pup' -> 'media/PuP/OnlyFoolsandHorses/playlists.pup'
+2026-06-09 06:58:21,582 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\PuPDesktopPunch.exe' -> 'media/PuP/OnlyFoolsandHorses/PuPDesktopPunch.exe'
+2026-06-09 06:58:21,696 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\PuPInit.bat' -> 'media/PuP/OnlyFoolsandHorses/PuPInit.bat'
+2026-06-09 06:58:21,700 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\screens.pup' -> 'media/PuP/OnlyFoolsandHorses/screens.pup'
+2026-06-09 06:58:21,703 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\triggers.pup' -> 'media/PuP/OnlyFoolsandHorses/triggers.pup'
+2026-06-09 06:58:21,707 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audioattract\clear.mp3' -> 'media/PuP/OnlyFoolsandHorses/audioattract/clear.mp3'
+2026-06-09 06:58:21,716 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audioattract\gameplay.mp3' -> 'media/PuP/OnlyFoolsandHorses/audioattract/gameplay.mp3'
+2026-06-09 06:58:21,729 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audiobg\nicolai-heidlas-lost-souls.mp3' -> 'media/PuP/OnlyFoolsandHorses/audiobg/nicolai-heidlas-lost-souls.mp3'
+2026-06-09 06:58:21,753 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audiocallouts\ball1locked.wav' -> 'media/PuP/OnlyFoolsandHorses/audiocallouts/ball1locked.wav'
+2026-06-09 06:58:21,763 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audiocallouts\ball2locked.wav' -> 'media/PuP/OnlyFoolsandHorses/audiocallouts/ball2locked.wav'
+2026-06-09 06:58:21,771 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audiocallouts\ballsaved.wav' -> 'media/PuP/OnlyFoolsandHorses/audiocallouts/ballsaved.wav'
+2026-06-09 06:58:21,779 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audiocallouts\extraball.wav' -> 'media/PuP/OnlyFoolsandHorses/audiocallouts/extraball.wav'
+2026-06-09 06:58:21,787 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audiocallouts\extraballislit.wav' -> 'media/PuP/OnlyFoolsandHorses/audiocallouts/extraballislit.wav'
+2026-06-09 06:58:21,795 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audiocallouts\getthemystery.wav' -> 'media/PuP/OnlyFoolsandHorses/audiocallouts/getthemystery.wav'
+2026-06-09 06:58:21,805 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audiocallouts\getthesuperjackpot.wav' -> 'media/PuP/OnlyFoolsandHorses/audiocallouts/getthesuperjackpot.wav'
+2026-06-09 06:58:21,814 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audiocallouts\kickback.wav' -> 'media/PuP/OnlyFoolsandHorses/audiocallouts/kickback.wav'
+2026-06-09 06:58:21,823 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audiocallouts\player1.wav' -> 'media/PuP/OnlyFoolsandHorses/audiocallouts/player1.wav'
+2026-06-09 06:58:21,832 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audiocallouts\player2.wav' -> 'media/PuP/OnlyFoolsandHorses/audiocallouts/player2.wav'
+2026-06-09 06:58:21,840 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audiocallouts\player3.wav' -> 'media/PuP/OnlyFoolsandHorses/audiocallouts/player3.wav'
+2026-06-09 06:58:21,849 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audiocallouts\player4.wav' -> 'media/PuP/OnlyFoolsandHorses/audiocallouts/player4.wav'
+2026-06-09 06:58:21,859 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audiocallouts\replay.wav' -> 'media/PuP/OnlyFoolsandHorses/audiocallouts/replay.wav'
+2026-06-09 06:58:21,867 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audiocallouts\rodneythrowball.mp3' -> 'media/PuP/OnlyFoolsandHorses/audiocallouts/rodneythrowball.mp3'
+2026-06-09 06:58:21,876 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audiocallouts\shootagain.wav' -> 'media/PuP/OnlyFoolsandHorses/audiocallouts/shootagain.wav'
+2026-06-09 06:58:21,884 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audiocallouts\skillshot.wav' -> 'media/PuP/OnlyFoolsandHorses/audiocallouts/skillshot.wav'
+2026-06-09 06:58:21,893 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audiocallouts\timeadded.wav' -> 'media/PuP/OnlyFoolsandHorses/audiocallouts/timeadded.wav'
+2026-06-09 06:58:21,902 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audiocallouts\yougotahighscore.wav' -> 'media/PuP/OnlyFoolsandHorses/audiocallouts/yougotahighscore.wav'
+2026-06-09 06:58:21,910 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audiocheers\fantastic.wav' -> 'media/PuP/OnlyFoolsandHorses/audiocheers/fantastic.wav'
+2026-06-09 06:58:21,920 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audiocheers\great.wav' -> 'media/PuP/OnlyFoolsandHorses/audiocheers/great.wav'
+2026-06-09 06:58:21,929 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audiocheers\keepgoing.wav' -> 'media/PuP/OnlyFoolsandHorses/audiocheers/keepgoing.wav'
+2026-06-09 06:58:21,937 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audiocheers\niceshot.wav' -> 'media/PuP/OnlyFoolsandHorses/audiocheers/niceshot.wav'
+2026-06-09 06:58:21,946 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audiocheers\niceshot2.wav' -> 'media/PuP/OnlyFoolsandHorses/audiocheers/niceshot2.wav'
+2026-06-09 06:58:21,955 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audiocheers\niceshot3.wav' -> 'media/PuP/OnlyFoolsandHorses/audiocheers/niceshot3.wav'
+2026-06-09 06:58:21,964 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audiocheers\youredoingit.wav' -> 'media/PuP/OnlyFoolsandHorses/audiocheers/youredoingit.wav'
+2026-06-09 06:58:21,973 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audioclear\clear.mp3' -> 'media/PuP/OnlyFoolsandHorses/audioclear/clear.mp3'
+2026-06-09 06:58:21,984 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audioevents\clear.mp3' -> 'media/PuP/OnlyFoolsandHorses/audioevents/clear.mp3'
+2026-06-09 06:58:21,993 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audioevents\extraball.mp3' -> 'media/PuP/OnlyFoolsandHorses/audioevents/extraball.mp3'
+2026-06-09 06:58:22,005 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audioevents\mystery.mp3' -> 'media/PuP/OnlyFoolsandHorses/audioevents/mystery.mp3'
+2026-06-09 06:58:22,017 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audioevents\replay.mp3' -> 'media/PuP/OnlyFoolsandHorses/audioevents/replay.mp3'
+2026-06-09 06:58:22,028 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audiojackpot\jackpot1.wav' -> 'media/PuP/OnlyFoolsandHorses/audiojackpot/jackpot1.wav'
+2026-06-09 06:58:22,038 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audiojackpot\jackpot2.wav' -> 'media/PuP/OnlyFoolsandHorses/audiojackpot/jackpot2.wav'
+2026-06-09 06:58:22,047 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audiojackpot\jackpot3.wav' -> 'media/PuP/OnlyFoolsandHorses/audiojackpot/jackpot3.wav'
+2026-06-09 06:58:22,058 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audiojackpot\jackpot4.wav' -> 'media/PuP/OnlyFoolsandHorses/audiojackpot/jackpot4.wav'
+2026-06-09 06:58:22,066 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audiosuperjackpot\superjackpot1.wav' -> 'media/PuP/OnlyFoolsandHorses/audiosuperjackpot/superjackpot1.wav'
+2026-06-09 06:58:22,075 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audiosuperjackpot\superjackpot2.wav' -> 'media/PuP/OnlyFoolsandHorses/audiosuperjackpot/superjackpot2.wav'
+2026-06-09 06:58:22,084 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\audiosuperjackpot\superjackpot3.wav' -> 'media/PuP/OnlyFoolsandHorses/audiosuperjackpot/superjackpot3.wav'
+2026-06-09 06:58:22,093 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\backglass\backglass.jpg' -> 'media/PuP/OnlyFoolsandHorses/backglass/backglass.jpg'
+2026-06-09 06:58:22,102 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\backglass\backglass1.jpg' -> 'media/PuP/OnlyFoolsandHorses/backglass/backglass1.jpg'
+2026-06-09 06:58:22,113 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\DMDAttract\attract1.mp4' -> 'media/PuP/OnlyFoolsandHorses/DMDAttract/attract1.mp4'
+2026-06-09 06:58:22,123 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\DMDSplash\@Ahhh.mp4' -> 'media/PuP/OnlyFoolsandHorses/DMDSplash/@Ahhh.mp4'
+2026-06-09 06:58:22,132 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\DMDSplash\@BallLocked.mp4' -> 'media/PuP/OnlyFoolsandHorses/DMDSplash/@BallLocked.mp4'
+2026-06-09 06:58:22,142 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\DMDSplash\@BallSaved.mp4' -> 'media/PuP/OnlyFoolsandHorses/DMDSplash/@BallSaved.mp4'
+2026-06-09 06:58:22,152 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\DMDSplash\@blank.mp4' -> 'media/PuP/OnlyFoolsandHorses/DMDSplash/@blank.mp4'
+2026-06-09 06:58:22,162 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\DMDSplash\@GameOver.mp4' -> 'media/PuP/OnlyFoolsandHorses/DMDSplash/@GameOver.mp4'
+2026-06-09 06:58:22,172 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\DMDSplash\@SuperJackpot.mp4' -> 'media/PuP/OnlyFoolsandHorses/DMDSplash/@SuperJackpot.mp4'
+2026-06-09 06:58:22,182 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\DMDSplash\@Welcome.mp4' -> 'media/PuP/OnlyFoolsandHorses/DMDSplash/@Welcome.mp4'
+2026-06-09 06:58:22,193 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\DMDSplash\BallLocked2.mp4' -> 'media/PuP/OnlyFoolsandHorses/DMDSplash/BallLocked2.mp4'
+2026-06-09 06:58:22,203 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\DMDSplash\blank.mp4' -> 'media/PuP/OnlyFoolsandHorses/DMDSplash/blank.mp4'
+2026-06-09 06:58:22,212 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\DMDSplash\BoneOrgan.mp4' -> 'media/PuP/OnlyFoolsandHorses/DMDSplash/BoneOrgan.mp4'
+2026-06-09 06:58:22,221 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\DMDSplash\DataGadget.mp4' -> 'media/PuP/OnlyFoolsandHorses/DMDSplash/DataGadget.mp4'
+2026-06-09 06:58:22,233 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\DMDSplash\DataGadgetLit.mp4' -> 'media/PuP/OnlyFoolsandHorses/DMDSplash/DataGadgetLit.mp4'
+2026-06-09 06:58:22,244 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\DMDSplash\DMDGuys.mp4' -> 'media/PuP/OnlyFoolsandHorses/DMDSplash/DMDGuys.mp4'
+2026-06-09 06:58:22,254 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\DMDSplash\DMDHey.mp4' -> 'media/PuP/OnlyFoolsandHorses/DMDSplash/DMDHey.mp4'
+2026-06-09 06:58:22,265 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\DMDSplash\DmdHeyYouGuys.mp4' -> 'media/PuP/OnlyFoolsandHorses/DMDSplash/DmdHeyYouGuys.mp4'
+2026-06-09 06:58:22,275 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\DMDSplash\DoubleScoring.mp4' -> 'media/PuP/OnlyFoolsandHorses/DMDSplash/DoubleScoring.mp4'
+2026-06-09 06:58:22,288 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\DMDSplash\Sloth.mp4' -> 'media/PuP/OnlyFoolsandHorses/DMDSplash/Sloth.mp4'
+2026-06-09 06:58:22,299 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\DMDSplash\Super.mp4' -> 'media/PuP/OnlyFoolsandHorses/DMDSplash/Super.mp4'
+2026-06-09 06:58:22,308 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\DMDSplash\SuperPops.mp4' -> 'media/PuP/OnlyFoolsandHorses/DMDSplash/SuperPops.mp4'
+2026-06-09 06:58:22,318 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\DMDSplash\Tilt.mp4' -> 'media/PuP/OnlyFoolsandHorses/DMDSplash/Tilt.mp4'
+2026-06-09 06:58:22,328 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\DMDSplash\TranslateMap.mp4' -> 'media/PuP/OnlyFoolsandHorses/DMDSplash/TranslateMap.mp4'
+2026-06-09 06:58:22,338 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\drainvideos\Plonker1.mp4' -> 'media/PuP/OnlyFoolsandHorses/drainvideos/Plonker1.mp4'
+2026-06-09 06:58:22,348 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\drainvideos\Plonker2.mp4' -> 'media/PuP/OnlyFoolsandHorses/drainvideos/Plonker2.mp4'
+2026-06-09 06:58:22,358 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\drainvideos\Plonker3.mp4' -> 'media/PuP/OnlyFoolsandHorses/drainvideos/Plonker3.mp4'
+2026-06-09 06:58:22,368 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\drainvideos\Plonker4.mp4' -> 'media/PuP/OnlyFoolsandHorses/drainvideos/Plonker4.mp4'
+2026-06-09 06:58:22,381 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\drainvideos\Plonker5.mp4' -> 'media/PuP/OnlyFoolsandHorses/drainvideos/Plonker5.mp4'
+2026-06-09 06:58:22,396 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\drainvideos\Plonker6.mp4' -> 'media/PuP/OnlyFoolsandHorses/drainvideos/Plonker6.mp4'
+2026-06-09 06:58:22,407 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\drainvideos\Plonker7.mp4' -> 'media/PuP/OnlyFoolsandHorses/drainvideos/Plonker7.mp4'
+2026-06-09 06:58:22,418 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\drainvideos\Plonker8.mp4' -> 'media/PuP/OnlyFoolsandHorses/drainvideos/Plonker8.mp4'
+2026-06-09 06:58:22,429 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\drainvideos\Plonker9.mp4' -> 'media/PuP/OnlyFoolsandHorses/drainvideos/Plonker9.mp4'
+2026-06-09 06:58:22,441 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\FONTS\BebasNeue-Regular.ttf' -> 'media/PuP/OnlyFoolsandHorses/FONTS/BebasNeue-Regular.ttf'
+2026-06-09 06:58:22,450 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\FONTS\Fundamental 3D Brigade.ttf' -> 'media/PuP/OnlyFoolsandHorses/FONTS/Fundamental 3D Brigade.ttf'
+2026-06-09 06:58:22,459 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\FONTS\Fundamental Brigade.ttf' -> 'media/PuP/OnlyFoolsandHorses/FONTS/Fundamental Brigade.ttf'
+2026-06-09 06:58:22,468 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\FONTS\Raleway-Medium.ttf' -> 'media/PuP/OnlyFoolsandHorses/FONTS/Raleway-Medium.ttf'
+2026-06-09 06:58:22,478 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\PuPFrames\default.png' -> 'media/PuP/OnlyFoolsandHorses/PuPFrames/default.png'
+2026-06-09 06:58:22,493 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\PuPFrames\goonies.png' -> 'media/PuP/OnlyFoolsandHorses/PuPFrames/goonies.png'
+2026-06-09 06:58:22,504 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\PuPOverlays\overlay.png' -> 'media/PuP/OnlyFoolsandHorses/PuPOverlays/overlay.png'
+2026-06-09 06:58:22,516 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\PuPOverlays\overlay_old.png' -> 'media/PuP/OnlyFoolsandHorses/PuPOverlays/overlay_old.png'
+2026-06-09 06:58:22,529 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\videoattract\backglass.jpg' -> 'media/PuP/OnlyFoolsandHorses/videoattract/backglass.jpg'
+2026-06-09 06:58:22,539 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\videoattract\backglass.mp4' -> 'media/PuP/OnlyFoolsandHorses/videoattract/backglass.mp4'
+2026-06-09 06:58:22,548 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\videoattract\backglass1.jpg' -> 'media/PuP/OnlyFoolsandHorses/videoattract/backglass1.jpg'
+2026-06-09 06:58:22,561 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\videoattract\intro.mp4' -> 'media/PuP/OnlyFoolsandHorses/videoattract/intro.mp4'
+2026-06-09 06:58:22,599 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\videoattract\BL_proxy\Intro.mp4\proxy_100.avi' -> 'media/PuP/OnlyFoolsandHorses/videoattract/BL_proxy/Intro.mp4/proxy_100.avi'
+2026-06-09 06:58:22,634 [MainThread  ] [INFO ]  + add 'C:\vPinball\PinUPSystem\PUPVideos\OnlyFoolsandHorses\videoattract\BL_proxy\Intro.mp4\record_run.blen_tc' -> 'media/PuP/OnlyFoolsandHorses/videoattract/BL_proxy/Intro.mp4/record_run.blen_tc'
+2026-06-09 06:58:36,657 [MainThread  ] [INFO ]  --[Save Package]-----------------------
+2026-06-09 06:58:36,692 [Thread-2    ] [INFO ]  * packing table 'Fireworks Mania(Original 2026).zip'
+2026-06-09 06:58:45,491 [Thread-2    ] [INFO ]  --[Edition 'Fireworks Mania(Original 2026)' Done]------------------
+2026-06-09 06:59:12,727 [Thread-3    ] [INFO ]  --[Backup Package]------------------
+2026-06-09 06:59:12,727 [Thread-3    ] [INFO ]  + copy '/Fireworks Mania(Original 2026).zip' -> 'C:/Users/DAVID/OneDrive/Desktop'
+2026-06-09 06:59:12,834 [Thread-3    ] [INFO ]  --[Done]------------------
+2026-06-09 06:59:20,243 [MainThread  ] [INFO ]  --[Delete Package(s)]------------------
+2026-06-09 06:59:20,264 [MainThread  ] [INFO ]  + del C:\Users\DAVID\Documents\tablePackager\packages\Fireworks Mania(Original 2026).zip
+2026-06-09 06:59:20,265 [MainThread  ] [INFO ]  --[Done]------------------
