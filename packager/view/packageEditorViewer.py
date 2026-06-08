@@ -226,12 +226,12 @@ class PackageEditorViewer(Frame, Observer):
         self.__btRotateRight = Button(self.__contentFrame, image=self.__btRotateRightImage,
                                       command=self.on_rotate_right_image,
                                       state='disable')
-        self.__btRotateRightTip = CreateToolTip(self.__btAddFile, 'Turn Right image')
+        self.__btRotateRightTip = CreateToolTip(self.__btRotateRight, 'Turn Right image')
         self.__btRotateRight.grid(row=5, column=2, sticky=N)
         self.__btRotateLeft = Button(self.__contentFrame, image=self.__btRotateLeftImage,
                                      command=self.on_rotate_left_image,
                                      state='disable')
-        self.__btRotateLeftTip = CreateToolTip(self.__btAddFile, 'Turn Left image')
+        self.__btRotateLeftTip = CreateToolTip(self.__btRotateLeft, 'Turn Left image')
         self.__btRotateLeft.grid(row=6, column=2, sticky=N)
 
         # =====================================================================
@@ -322,7 +322,7 @@ class PackageEditorViewer(Frame, Observer):
                 self.__btRotateRight['state'] = 'disable'
                 self.__btRotateLeft['state'] = 'disable'
         else:
-            if 'file' in item['tags'] or 'category' in item['tags']:
+            if 'file' in item['tags'] or 'category' in item['tags'] or any(k in item['tags'] for k in ['UltraDMD', 'FlexDMD']):
                 if self.__btProtectedState.get() == 'False':
                     self.__btAddFile['state'] = 'normal'
                     
@@ -334,7 +334,7 @@ class PackageEditorViewer(Frame, Observer):
                     self.__btDownFile['state'] = 'normal'
                 self.preview(item['text'], item['tags'][-1])
 
-            if 'product' in item['tags']:
+            if 'product' in item['tags'] and not any(k in item['tags'] for k in ['UltraDMD', 'FlexDMD']):
                 if self.__btProtectedState.get() == 'False':
                     self.__btAddFile['state'] = 'disable'
             if 'product' in item['tags'] or 'category' in item['tags']:
@@ -379,9 +379,19 @@ class PackageEditorViewer(Frame, Observer):
         if 'UltraDMD' in item['tags']:
             ultraDMDDir = filedialog.askdirectory(parent=self.__topLevel,
                                                   initialdir=self.__last_dir,
-                                                  title="Select UltraDMD Directory to import")
-            self.__packageEditorModel.add_ultra_dmd(self.__topLevel, item['tags'][-1], ultraDMDDir)
-            self.__last_dir = ultraDMDDir
+                                                  title="Select UltraDMD Directory")
+            if ultraDMDDir:
+                self.__packageEditorModel.add_ultradmd(self.__topLevel, item['tags'][-1], ultraDMDDir)
+                self.__last_dir = ultraDMDDir
+            return
+
+        if 'FlexDMD' in item['tags']:
+            flexDMDDir = filedialog.askdirectory(parent=self.__topLevel,
+                                                 initialdir=self.__last_dir,
+                                                 title="Select FlexDMD Directory")
+            if flexDMDDir:
+                self.__packageEditorModel.add_flexdmd(self.__topLevel, item['tags'][-1], flexDMDDir)
+                self.__last_dir = flexDMDDir
             return
 
         if 'VPinMAME/cfg' in item['tags']:

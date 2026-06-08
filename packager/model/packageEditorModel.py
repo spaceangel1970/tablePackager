@@ -128,7 +128,7 @@ class PackageEditorModel(Observable):
         self.package.update()
         self.notify_all(self, events=['<<UPDATE_EDITOR>>'], selection_set=selection)  # update listeners
 
-    def add_ultra_dmd(self, viewer, dataPath, src_dir):
+    def add_ultradmd(self, viewer, dataPath, src_dir):
         self.logger.info("* UltraDMD files")
 
         ultra_dmd_dir = str(Path(src_dir).name)
@@ -141,6 +141,22 @@ class PackageEditorModel(Observable):
                     parent_path = str(rel_path.parent).replace('\\', '/')
                     dst_field += f"/{parent_path}"
                 self.package.add_file(str(file), dst_field)
+        self.update_package()
+
+    def add_flexdmd(self, viewer, dataPath, src_dir):
+        self.logger.info("* FlexDMD files")
+
+        flex_dmd_dir = str(Path(src_dir).name)
+        self.package.set_field('visual pinball/info/flexDMD', flex_dmd_dir)
+        for file in Path(src_dir).glob('**/*'):
+            if file.is_file():
+                rel_path = file.relative_to(src_dir)
+                dst_field = f"FlexDMD/{flex_dmd_dir}"
+                if str(rel_path.parent) != '.':
+                    parent_path = str(rel_path.parent).replace('\\', '/')
+                    dst_field += f"/{parent_path}"
+                self.package.add_file(str(file), dst_field)
+        self.update_package()
 
     def scan_pup_for_table(self):
         table_name = self.package.get_field('info/table name')
@@ -156,19 +172,23 @@ class PackageEditorModel(Observable):
         rename_it = False
         try:
             filename = Path(srcFile).name
-            target_file = srcFile
+            target_file = filename
 
-            if type(required_name) is list:
-                if len(required_name) == 0:
-                    tkinter.messagebox.showwarning("Renaming File",
-                                                   "No information found for filename",
-                                                   parent=viewer)
-                else:
-                    rename_it = [name for name in required_name if name.upper() == Path(filename).stem.upper()] == []
-                    required_name=required_name[0]
-
+            # Music, Audio, FlexDMD, and UltraDMD assets must keep their original names for script compatibility.
+            if any(k in data_path for k in ['Music', 'Audio', 'FlexDMD', 'UltraDMD']):
+                rename_it = False
             else:
-                rename_it = Path(filename).stem.upper() != required_name.upper()
+                if type(required_name) is list:
+                    if len(required_name) == 0:
+                        tkinter.messagebox.showwarning("Renaming File",
+                                                       "No information found for filename",
+                                                       parent=viewer)
+                    else:
+                        rename_it = [name for name in required_name if name.upper() == Path(filename).stem.upper()] == []
+                        required_name = required_name[0]
+                else:
+                    rename_it = Path(filename).stem.upper() != required_name.upper()
+
             if rename_it:
                 suffixes = Path(filename).suffixes
                 new_name = required_name + ''.join(suffixes)
