@@ -340,7 +340,8 @@ class Package:
            not isinstance(self.__manifest.content['visual pinball']['Music'], list):
             self.__manifest.content['visual pinball']['Music'] = []
 
-        self.build_tree(self.directory + '/' + self._name, self.manifest.content)
+        # Only create the base package directory; subfolders are created JIT when files are added
+        os.makedirs(os.path.join(self.directory, self._name), exist_ok=True)
         self.__manifest.save(self.directory)
 
     def build_tree(self, baseDir, content):

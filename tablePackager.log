@@ -1,5 +1,27 @@
-2026-06-05 20:46:34,410 [MainThread  ] [INFO ]  Starting. Data Directory: C:\Users\DAVID\Documents\tablePackager
-2026-06-05 20:46:34,411 [MainThread  ] [INFO ]  Started
-2026-06-05 20:46:34,414 [MainThread  ] [INFO ]  Reading VPS puplookup.csv Database
-2026-06-05 20:46:34,460 [MainThread  ] [INFO ]  Successfully loaded 2631 table indices from CSV configuration.
-2026-06-05 20:46:34,982 [MainThread  ] [INFO ]  Scanning for Visual Pinball tables...
+2026-06-08 15:24:22,808 [MainThread  ] [INFO ]  Starting. Data Directory: C:\Users\DAVID\Documents\tablePackager
+2026-06-08 15:24:22,809 [MainThread  ] [INFO ]  Started
+2026-06-08 15:24:22,811 [MainThread  ] [INFO ]  Reading VPS puplookup.csv Database
+2026-06-08 15:24:22,813 [MainThread  ] [INFO ]  Successfully loaded 0 table indices from CSV configuration.
+2026-06-08 15:24:23,654 [MainThread  ] [INFO ]  Scanning for Visual Pinball tables...
+2026-06-08 15:24:31,546 [MainThread  ] [INFO ]  --[New Package 'New_Table_Package']------------------
+2026-06-08 15:25:02,362 [MainThread  ] [INFO ]  --[Rename Package to 'Fireworks Mania(Original 2026)']----------
+2026-06-08 15:25:02,367 [Thread-1    ] [INFO ]  + rename directory  'New_Table_Package'
+2026-06-08 15:25:02,369 [Thread-1    ] [INFO ]  --[Rename 'Fireworks Mania(Original 2026)' Done]------------------
+2026-06-08 15:25:41,849 [MainThread  ] [INFO ]  + add 'C:/Users/DAVID/Downloads/Add to Cab/Fireworks Mania/Fireworks Mania.vpx' -> 'visual pinball/tables/Fireworks Mania(Original 2026).vpx'
+2026-06-08 15:25:43,229 [MainThread  ] [INFO ]  + updating rom name [['FireworksMania']]
+2026-06-08 15:26:03,345 [MainThread  ] [INFO ]  + add 'C:/Users/DAVID/Downloads/Add to Cab/Fireworks Mania/Fireworks Mania.directb2s' -> 'visual pinball/tables/Fireworks Mania(Original 2026).directb2s'
+2026-06-08 15:26:24,847 [MainThread  ] [INFO ]  + add 'C:/Users/DAVID/Downloads/Add to Cab/Fireworks Mania/Music/fireworksmania_endgame.mp3' -> 'visual pinball/Music/Fireworks Mania(Original 2026).mp3'
+2026-06-08 15:26:40,698 [MainThread  ] [INFO ]  + remove 'visual pinball/Music/Fireworks Mania(Original 2026).mp3'
+2026-06-08 15:28:16,331 [MainThread  ] [INFO ]  + add 'C:/Users/DAVID/Downloads/Add to Cab/Fireworks Mania/fireworksmania_wheel.png' -> 'media/Wheel/Fireworks Mania(Original 2026).png'
+2026-06-08 15:28:20,742 [MainThread  ] [INFO ]  --[Save Package]-----------------------
+2026-06-08 15:28:20,768 [Thread-2    ] [INFO ]  * packing table 'Fireworks Mania(Original 2026).zip'
+2026-06-08 15:28:26,555 [Thread-2    ] [INFO ]  --[Edition 'Fireworks Mania(Original 2026)' Done]------------------
+2026-06-08 15:28:39,617 [Thread-3    ] [INFO ]  --[Backup Package]------------------
+2026-06-08 15:28:39,618 [Thread-3    ] [INFO ]  + copy '/Fireworks Mania(Original 2026).zip' -> 'C:/Users/DAVID/OneDrive/Desktop'
+2026-06-08 15:28:39,653 [Thread-3    ] [INFO ]  --[Done]------------------
+2026-06-08 15:29:24,925 [MainThread  ] [INFO ]  --[Delete Package(s)]------------------
+2026-06-08 15:29:24,934 [MainThread  ] [INFO ]  + del C:\Users\DAVID\Documents\tablePackager\packages\Fireworks Mania(Original 2026).zip
+2026-06-08 15:29:24,934 [MainThread  ] [INFO ]  --[Done]------------------
+2026-06-08 15:29:28,985 [MainThread  ] [INFO ]  --[Delete Package(s)]------------------
+2026-06-08 15:29:28,988 [MainThread  ] [INFO ]  + del C:\Users\DAVID\Documents\tablePackager\packages\The Price is Right(Original).zip
+2026-06-08 15:29:28,988 [MainThread  ] [INFO ]  --[Done]------------------

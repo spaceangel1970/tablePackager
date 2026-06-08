@@ -267,15 +267,6 @@ class FuturePinball:
                     else:
                         self.logger.info(f"    - Folder exists but is empty.")
 
-        # Cleanup empty folders in the staging area for a cleaner ZIP
-        package_root = Path(package.directory) / package.name
-        if package_root.exists():
-            for root, dirs, files in os.walk(package_root, topdown=False):
-                for name in dirs:
-                    dir_path = Path(root) / name
-                    if dir_path.exists() and not any(dir_path.iterdir()):
-                        dir_path.rmdir()
-
         # Normalize the package name for the final ZIP archive to enable update overwrites.
         # This strips version and mod information that follows the year anchor.
         full_name = package.name
@@ -294,6 +285,15 @@ class FuturePinball:
         if full_name != stripped_name:
             self.logger.info(f"* Normalizing package: '{full_name}' -> '{stripped_name}'")
             package.rename_package(stripped_name)
+
+        # Cleanup empty folders in the staging area for a cleaner ZIP
+        package_root = Path(package.directory) / package.name
+        if package_root.exists():
+            for root, dirs, files in os.walk(package_root, topdown=False):
+                for name in dirs:
+                    dir_path = Path(root) / name
+                    if dir_path.exists() and not any(dir_path.iterdir()):
+                        dir_path.rmdir()
 
         self.logger.info(f"*** Finished processing Future Pinball assets for: {package.name} ***")
         self.logger.info("--------------------------------------------------")

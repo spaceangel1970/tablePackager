@@ -58,13 +58,12 @@ class PackageEditorModel(Observable):
             self.logger.error("* Unpack failed")
             self.notify_all(self, events=['<<END_ACTION>>'])  # update listeners
 
-    def new_package(self):
-        self.currentPackage = {'name': 'John Doe'}
-        self.logger.info("--[New Package '%s']------------------" % (self.currentPackage['name']))
+    def new_package(self, name='New_Table_Package'):
+        self.currentPackage = {'name': name}
+        self.logger.info("--[New Package '%s']------------------" % (name))
         self.notify_all(self, events=['<<DISABLE_ALL>>', '<<BEGIN_ACTION>>'])  # update listeners
-        self.__package = Package(self.baseModel, 'John Doe')
+        self.__package = Package(self.baseModel, name)
         self.package.new(self.baseModel.tmp_path)
-        self.package.save()
         self.notify_all(self, events=['<<END_ACTION>>', '<<VIEW EDITOR>>'])  # update listeners
 
     def save_package(self, info):
@@ -92,7 +91,7 @@ class PackageEditorModel(Observable):
     def pack_package_end(self, context=None, success=True):
         self.logger.info("--[Edition '%s' Done]------------------" % (self.package.name))
         self.notify_all(self, events=['<<END_ACTION>>', '<<PACKAGE UNSELECTED>>', '<<ENABLE_ALL>>'])  # update listeners
-        self.baseModel.packagedTablesModel
+        self.baseModel.packagedTablesModel.update()
 
     def rename_package(self, new_package_name):
         self.logger.info("--[Rename Package to '%s']----------" % new_package_name)
@@ -115,7 +114,7 @@ class PackageEditorModel(Observable):
         else:
             self.logger.error("--[Rename '%s' Failed]------------------" % (self.package.name))
         self.notify_all(self, events=['<<UPDATE_EDITOR>>', '<<ENABLE_ALL>>'])  # update listeners
-        self.baseModel.packagedTablesModel
+        self.baseModel.packagedTablesModel.update()
 
     def cancel_edition(self):
         if not self.__currentPackage:  # empty selection
