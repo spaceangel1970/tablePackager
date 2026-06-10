@@ -168,8 +168,13 @@ class PackageEditorModel(Observable):
             if file.is_file():
                 rel_path = file.relative_to(src_dir)
                 # dst_field is the category path (e.g., 'visual pinball/Music')
-                # dst_file includes the folder name and relative path within that folder
-                self.package.add_file(str(file), dataPath, dst_file=f"{music_folder_name}/{rel_path.as_posix()}")
+                # If the user selected a folder named 'Music', avoid redundant nesting (Music/Music)
+                if music_folder_name.lower() == 'music':
+                    final_dst = rel_path.as_posix()
+                else:
+                    final_dst = f"{music_folder_name}/{rel_path.as_posix()}"
+                
+                self.package.add_file(str(file), dataPath, dst_file=final_dst)
         self.update_package()
 
     def add_pup_pack_folder(self, viewer, dataPath, src_dir):
@@ -181,9 +186,13 @@ class PackageEditorModel(Observable):
         for file in Path(src_dir).glob('**/*'):
             if file.is_file():
                 rel_path = file.relative_to(src_dir)
-                # dst_field is the category path (e.g., 'media/PuP')
-                # dst_file includes the folder name and relative path within that folder
-                self.package.add_file(str(file), dataPath, dst_file=f"{pup_folder_name}/{rel_path.as_posix()}")
+                # If the folder name matches generic PuP container keywords, avoid redundant nesting inside media/PuP
+                if pup_folder_name.lower() in ['pup', 'pup pack', 'pupvideos']:
+                    final_dst = rel_path.as_posix()
+                else:
+                    final_dst = f"{pup_folder_name}/{rel_path.as_posix()}"
+                
+                self.package.add_file(str(file), dataPath, dst_file=final_dst)
         self.update_package()
 
     def scan_pup_for_table(self):
