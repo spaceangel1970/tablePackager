@@ -7,6 +7,7 @@ import tkinter
 import re
 import copy
 import xml.etree.ElementTree as ET
+import logging
 from packager.tools.toolbox import *
 from packager.model.package import Package
 
@@ -171,12 +172,6 @@ class VisualPinball:
             self.logger.info(f"* Successfully archived {packed_count} of {len(found_music_tracks)} music tracks.")
         else:
             self.logger.info("- No external background music (.mp3/.ogg) found in this table.")
-
-        # --- SESSION LOG CAPTURE ---
-        log_path = os.path.join(tempfile.gettempdir(), 'tablePackager.log')
-        if os.path.exists(log_path):
-            self.logger.info(f"* Bundling session log: {log_path}")
-            package.add_file(log_path, 'visual pinball/logs', dst_file='Log.txt')
 
         # Normalize the package name for the final ZIP archive to enable update overwrites.
         # This strips version and mod information that follows the year anchor.

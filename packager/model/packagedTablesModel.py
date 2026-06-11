@@ -1,6 +1,7 @@
 from __future__ import annotations
 import tkinter
 import sys
+import datetime
 from packager.model.package import *
 from packager.tools.observer import Observable
 from packager.tools.toolbox import *
@@ -116,7 +117,8 @@ class PackagedTablesModel(Observable):
                     with open(log_src, 'r', encoding='utf-8', errors='ignore') as f_src:
                         log_content = f_src.read()
                     with open(log_dest, 'a', encoding='utf-8') as f_dest:
-                        f_dest.write(f"\n\n{'='*60}\nDEPLOYMENT: {packageInfo['name']} ({utcTime2IsoStr()})\n{'='*60}\n")
+                        local_now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                        f_dest.write(f"\n\n{'='*60}\nDEPLOYMENT: {packageInfo['name']} ({local_now})\n{'='*60}\n")
                         f_dest.write(log_content)
                     self.logger.info(f"++ Deployment log appended to: {log_dest}")
 

@@ -28,6 +28,7 @@ class BaseModel:
     # Update the constructor to accept the passed data_dir
     def __init__(self, logger: logging, version: str, package_version: str, data_dir: str) -> None:
         self.__logger = logger
+        self.__data_dir = data_dir
         
         # Determine the base directory logic
         if Path(os.getcwd()).name == 'packager':  # running from IDE
@@ -88,6 +89,10 @@ class BaseModel:
     @property
     def config(self) -> Config:
         return self.__config
+
+    @property
+    def log_path(self) -> str:
+        return os.path.join(self.__data_dir, 'tablePackager.log')
 
     @property
     def logger(self) -> logging:

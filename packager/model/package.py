@@ -582,11 +582,25 @@ class Package:
         if not os.path.exists(self.directory):
             raise PackageException("Package not found at %s" % self.directory)
 
-        self.manifest.rename(self.directory, new_name)
         self.logger.info("+ rename directory  '%s'" % (self._name))
+        
+        old_path = os.path.normpath(os.path.join(self.directory, self._name))
+        new_path = os.path.normpath(os.path.join(self.directory, new_name))
 
-        os.rename(self.directory + '/' + self._name,
-                  self.directory + '/' + new_name)
+        # Perform manifest rename inside the directory before moving the directory itself
+        self.manifest.rename(self.directory, new_name)
+
+        # Windows often locks directories immediately after heavy file IO (like PuP extraction).
+        # We use a retry loop to give the OS/Antivirus time to release file handles.
+        for i in range(10):
+            try:
+                os.rename(old_path, new_path)
+                break
+            except (PermissionError, OSError):
+                time.sleep(0.5)
+        else:
+            os.rename(old_path, new_path) # Final attempt to raise the error if it persists
+            
         self._name = new_name
 
     def set_field(self, field_path, value):
@@ -657,7 +671,6 @@ class Package:
             # Music files are now permitted to stream through and log themselves 
             # properly to index hooks so the UI Tree View can see them!
             self.manifest.add_file(dst_field_path, complete_dst_file_path, name=dst_file)
-            self.save()
             
         except OSError as e:
             self.logger.error(str(e))

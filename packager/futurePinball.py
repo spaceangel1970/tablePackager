@@ -222,7 +222,7 @@ class FuturePinball:
                     self.logger.error(f"    ! Error slicing DmdDevice.ini: {e}")
 
             # --- SESSION LOG CAPTURE ---
-            log_path = os.path.join(tempfile.gettempdir(), 'tablePackager.log')
+            log_path = self.baseModel.log_path
             if os.path.exists(log_path):
                 self.logger.info(f"* Bundling session log: {log_path}")
                 package.add_file(log_path, 'future pinball/logs', dst_file='Log.txt')

@@ -3,6 +3,7 @@ import shutil
 import re
 import configparser
 import tempfile
+import logging
 from pathlib import Path
 from packager.tools.toolbox import *
 from packager.model.package import Package
@@ -220,12 +221,6 @@ class FuturePinball:
                         self.logger.info(f"    ++ Sliced DmdDevice.ini section for: {table_stem}")
                 except Exception as e:
                     self.logger.error(f"    ! Error slicing DmdDevice.ini: {e}")
-
-            # --- SESSION LOG CAPTURE ---
-            log_path = os.path.join(tempfile.gettempdir(), 'tablePackager.log')
-            if os.path.exists(log_path):
-                self.logger.info(f"* Bundling session log: {log_path}")
-                package.add_file(log_path, 'future pinball/logs', dst_file='Log.txt')
 
             # --- PUP PACK EXTRACTION ---
             # Determine the correct PUP Pack folder

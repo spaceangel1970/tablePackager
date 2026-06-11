@@ -1,5 +1,10 @@
+import os
 import json
 import traceback
+import logging
+import tempfile
+import shutil
+import time
 from tkinter import messagebox
 from packager.model.package import *
 
@@ -91,6 +96,11 @@ class InstalledTablesModel(Observable):
 
         self.baseModel.logger.info("Begin Extraction")
         for table in self.__selectedTable:
+            # Record the start offset of the log file to capture only new entries for this specific table
+            log_start_pos = 0
+            if os.path.exists(self.baseModel.log_path):
+                log_start_pos = os.path.getsize(self.baseModel.log_path)
+
             try:
                 clean_dir(self.baseModel.tmp_path)
                 self.logger.info("--[Working on '%s']------------------" % (table['name']))
@@ -119,6 +129,34 @@ class InstalledTablesModel(Observable):
                     self.baseModel.futurePinball.extract(package)
                     if context['pinupSystem'].get():
                         self.baseModel.pinupSystem.extract(package, 'future pinball')
+
+                # --- SESSION LOG CAPTURE ---
+                # Perform log capture at the very end of the extraction process to ensure
+                # all components (VP, VPM, PuP, etc.) have completed their logging.
+                # We read the content and write a snapshot to avoid file-lock or empty buffer issues.
+                log_path = self.baseModel.log_path
+                if os.path.exists(log_path):
+                    self.logger.info(f"* Capturing session log snapshot: {log_path}")
+                    # Force flush root and local handlers to commit buffers to disk
+                    for handler in logging.root.handlers:
+                        if hasattr(handler, 'flush'):
+                            handler.flush()
+                    for handler in self.logger.handlers:
+                        handler.flush()
+
+                    # Create a static snapshot of the cumulative session log
+                    snap_path = os.path.join(self.baseModel.tmp_path, 'Log_Snapshot.txt')
+                    with open(log_path, 'r', encoding='utf-8', errors='ignore') as f_in:
+                        f_in.seek(log_start_pos)
+                        log_data = f_in.read()
+                    with open(snap_path, 'w', encoding='utf-8') as f_out:
+                        f_out.write(log_data)
+
+                    if context['visual_pinball'].get():
+                        package.add_file(snap_path, 'visual pinball/logs', dst_file='Log.txt')
+                    if context['futurPinball'].get():
+                        package.add_file(snap_path, 'future pinball/logs', dst_file='Log.txt')
+
                 package.save()
                 package.pack()  # zip package
 
@@ -134,7 +172,17 @@ class InstalledTablesModel(Observable):
                     self.logger.info(f"Overwriting existing package: {final_name}")
                     os.remove(dest_path)
 
-                shutil.move(src_path, self.baseModel.package_path)
+                # Windows often locks the newly created ZIP file while Antivirus or Indexer scans it.
+                # This is especially common with large packages like Future Pinball PuP packs.
+                # We use a retry loop to give the OS time to release the file handle.
+                for i in range(30):
+                    try:
+                        shutil.move(src_path, dest_path)
+                        break
+                    except (PermissionError, OSError, shutil.Error):
+                        time.sleep(2.0)
+                else:
+                    shutil.move(src_path, dest_path) # Final attempt to raise error
 
             except Exception as e:
                 import traceback
@@ -145,10 +193,18 @@ class InstalledTablesModel(Observable):
         return True
 
     def extract_tables_end(self, context=None, success=True):
-        self.logger.info("--[Done]------------------")
-        self.notify_all(self, events=['<<END_ACTION>>', '<<ENABLE_ALL>>'],
-                        tables=self.__selectedTable)  # update listeners
-        self.baseModel.packagedTablesModel.update()
+        def dispatch_ui():
+            if success:
+                self.logger.info("--[Done]------------------")
+            else:
+                self.logger.error("--[Extraction Failed]------------------")
+
+            self.notify_all(self, events=['<<END_ACTION>>', '<<ENABLE_ALL>>'],
+                            tables=self.__selectedTable)  # update listeners
+            self.baseModel.packagedTablesModel.update()
+
+        import tkinter
+        tkinter._default_root.after_idle(dispatch_ui)
 
     def delete_tables(self, viewer):
         self.notify_all(self, events=['<<DISABLE_ALL>>', '<<BEGIN_ACTION>>'])  # update listeners
@@ -215,15 +271,14 @@ class InstalledTablesModel(Observable):
         return True
 
     def delete_tables_end(self, context=None, success=True):
-        self.logger.info("--[Done]------------------")
-        
-        # 1. Reset our internal tracking selection states completely
-        self.__selectedTable = []
-        
-        # 2. Tell the UI to unlock all buttons and finish processing actions
-        self.notify_all(self, events=['<<TABLE UNSELECTED>>', '<<END_ACTION>>', '<<ENABLE_ALL>>'])
-        
-        # 3. FORCE the main UI loop to safely execute a refresh out-of-thread
-        # This acts exactly like a delayed automatic tap on your green reload button!
+        def dispatch_ui():
+            self.logger.info("--[Done]------------------")
+            # 1. Reset our internal tracking selection states completely
+            self.__selectedTable = []
+            # 2. Tell the UI to unlock all buttons and finish processing actions
+            self.notify_all(self, events=['<<TABLE UNSELECTED>>', '<<END_ACTION>>', '<<ENABLE_ALL>>'])
+            # 3. FORCE the main UI loop to safely execute a refresh out-of-thread
+            self.update()
+
         import tkinter
-        tkinter._default_root.after_idle(self.update)
+        tkinter._default_root.after_idle(dispatch_ui)
