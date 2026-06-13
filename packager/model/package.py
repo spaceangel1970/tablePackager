@@ -106,7 +106,9 @@ class Manifest:
                 
                 # Migration safety hook: If an old manifest used a literal "PuP Pack" key inside json, map it back to "PuP"
                 if 'media' in self.__content and 'PuP Pack' in self.__content['media']:
-                    self.__content['media']['PuP'] = self.__content['media'].pop('PuP Pack')
+                    if 'PuP' not in self.__content['media']:
+                        self.__content['media']['PuP'] = []
+                    self.__content['media']['PuP'].extend(self.__content['media'].pop('PuP Pack'))
         except:
             raise PackageException("Manifest not found at %s" % (path + '/' + self.name + '/' + self.filename))
 
@@ -312,10 +314,10 @@ class Manifest:
             if key == 'info': continue
             for value in values:
                 if value.get('file'):
-                    if Path(value['file']['name']).suffix == '.png' or Path(value['file']['name']).suffix == '.jpg':
-                        # Present correct UI paths back to application loop hooks
-                        ui_key = 'PuP Pack' if key == 'PuP' else key
-                        return 'media/' + ui_key, value['file']['name']
+                    ext = os.path.splitext(value['file']['name'])[1].lower()
+                    if ext in ['.png', '.jpg', '.jpeg', '.bmp', '.gif', '.webp', '.tiff']:
+                        # Return 'media/Category' format for the viewer
+                        return 'media/' + key, value['file']['name']
         return None, None
 
 
@@ -398,20 +400,13 @@ class Package:
                         if 'PuP' not in self.manifest.content['media']:
                             self.manifest.content['media']['PuP'] = []
                         
-                        already_listed = False
-                        for tracked_file in self.manifest.content['media']['PuP']:
-                            if tracked_file.get('file', {}).get('name') == folder_item:
-                                already_listed = True
-                                break
-                        
-                        if not already_listed:
-                            total_bytes = 0
-                            for root, dirs, files in os.walk(target_folder_path):
-                                for f in files:
-                                    fp = os.path.join(root, f)
-                                    if os.path.exists(fp):
-                                        total_bytes += os.path.getsize(fp)
+                        # Speed Optimization: Case-insensitive O(1) duplicate checks for folder hooks
+                        existing_names = {tf.get('file', {}).get('name').lower() for tf in self.manifest.content['media']['PuP']}
+                        already_listed = folder_item.lower() in existing_names
 
+                        if not already_listed:
+                            # Optimization: Avoid expensive recursive walk for large PuP folders in UI preview
+                            total_bytes = 0
                             virtual_entry = collections.OrderedDict()
                             virtual_entry['name'] = folder_item
                             virtual_entry['size'] = total_bytes
@@ -442,20 +437,13 @@ class Package:
                                 self.manifest.content['VPinMAME'][vpin_category] = []
                             
                             # Check if already in manifest to prevent duplicate display rows
-                            already_listed = False
-                            for tracked_file in self.manifest.content['VPinMAME'][vpin_category]:
-                                if tracked_file.get('file', {}).get('name') == folder_item:
-                                    already_listed = True
-                                    break
-                            
-                            if not already_listed:
-                                total_bytes = 0
-                                for root, dirs, files in os.walk(target_folder_path):
-                                    for f in files:
-                                        fp = os.path.join(root, f)
-                                        if os.path.exists(fp):
-                                            total_bytes += os.path.getsize(fp)
+                            # Speed Optimization: Case-insensitive Set-based lookup
+                            existing_vpm_names = {tf.get('file', {}).get('name').lower() for tf in self.manifest.content['VPinMAME'][vpin_category]}
+                            already_listed = folder_item.lower() in existing_vpm_names
 
+                            if not already_listed:
+                                # Optimization: Avoid expensive recursive walk for VPinMAME folders
+                                total_bytes = 0
                                 virtual_entry = collections.OrderedDict()
                                 virtual_entry['name'] = folder_item
                                 virtual_entry['size'] = total_bytes
@@ -509,11 +497,11 @@ class Package:
                     self.logger.warning('File %s not found in package', file_path + '/' + value['name'])
                     error_list.append((file_path, value['name']))
             elif isinstance(value, dict):
-                error_list = error_list + self.check_files(content[key], origin_path, file_path + '/' + key)
+                error_list.extend(self.check_files(content[key], origin_path, file_path + '/' + key))
             elif type(value) is list:
                 for item in value:
                     if isinstance(item, dict):
-                        error_list = error_list + self.check_files(item, origin_path, file_path + '/' + key)
+                        error_list.extend(self.check_files(item, origin_path, file_path + '/' + key))
 
         return error_list
 

@@ -63,9 +63,9 @@ def extract_string_from_binary_file(vpx_file: str, pattern: str) -> list:
         return []
     with open(vpx_file, 'rb') as file:
         with mmap.mmap(file.fileno(), 0, access=mmap.ACCESS_READ) as s:
-            m = p.findall(s)
-            for rom in m:
-                roms.append(rom.decode('ascii', errors='ignore'))
+            # Use finditer to avoid loading all matches into a list at once
+            for match in p.finditer(s):
+                roms.append(match.group().decode('ascii', errors='ignore'))
     return list(set(roms))  # Deduplicate findings cleanly
 
 
@@ -99,19 +99,20 @@ def zip_dir(path: str, ziph: zipfile.ZipFile) -> None:
 
 
 def zip_file(src: str) -> None:
-    with zipfile.ZipFile(src + '.zip', 'w', zipfile.ZIP_DEFLATED) as zipf:
+    # allowZip64 is required for files > 4GB or > 65535 files
+    with zipfile.ZipFile(src + '.zip', 'w', zipfile.ZIP_DEFLATED, allowZip64=True) as zipf:
         zipf.write(src, os.path.basename(src))
 
 
 def pack(src: str, dest: str, pack_name: str) -> None:
     os.makedirs(dest, exist_ok=True)
-    with zipfile.ZipFile(os.path.join(dest, pack_name), 'w', zipfile.ZIP_DEFLATED) as zipf:
+    with zipfile.ZipFile(os.path.join(dest, pack_name), 'w', zipfile.ZIP_DEFLATED, allowZip64=True) as zipf:
         zip_dir(src, zipf)
 
 
 def unpack(src: str, dest: str) -> None:
     os.makedirs(dest, exist_ok=True)
-    with zipfile.ZipFile(src, 'r') as zipf:
+    with zipfile.ZipFile(src, 'r', allowZip64=True) as zipf:
         zipf.extractall(dest)
 
 
@@ -147,9 +148,15 @@ def strIsoUTCTime2DateTime(strIsoTime):
                     corrected_time_part = f"{hour}:{min_sec[:2]}:{min_sec[2:]}"
                     strIsoTime = f"{date_part}T{corrected_time_part}.{micro_part}"
 
-    # Fixed NameError by referencing nested datetime namespace module directly
-    stime = time.strptime(strIsoTime, "%Y-%m-%dT%H:%M:%S.%f%z")
-    return datetime.datetime.fromtimestamp(time.mktime(stime), datetime.timezone.utc)
+    # Use fromisoformat for better reliability and performance
+    if strIsoTime.endswith('Z'):
+        strIsoTime = strIsoTime.replace('Z', '+00:00')
+    try:
+        return datetime.datetime.fromisoformat(strIsoTime)
+    except (ValueError, AttributeError):
+        # Fallback for older formats
+        stime = try_str_2_struct_time(strIsoTime, "%Y-%m-%dT%H:%M:%S")
+        return struct_time_2_datetime(stime)
 
 
 def mtime2IsoStr(mtime):

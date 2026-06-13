@@ -147,8 +147,11 @@ class InstalledTablesModel(Observable):
                     # Create a static snapshot of the cumulative session log
                     snap_path = os.path.join(self.baseModel.tmp_path, 'Log_Snapshot.txt')
                     with open(log_path, 'r', encoding='utf-8', errors='ignore') as f_in:
+                        # Safety check: if the diff is massive, don't read it all at once
+                        f_in.seek(0, os.SEEK_END)
+                        file_size = f_in.tell()
                         f_in.seek(log_start_pos)
-                        log_data = f_in.read()
+                        log_data = f_in.read(10 * 1024 * 1024) # Limit snapshot to 10MB max
                     with open(snap_path, 'w', encoding='utf-8') as f_out:
                         f_out.write(log_data)
 

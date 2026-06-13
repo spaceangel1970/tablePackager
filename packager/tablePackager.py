@@ -5,8 +5,8 @@ import tempfile
 import tkinter.messagebox
 
 # Major.minor.fix; Minor number++ when package format/info change
-version = '1.2.1'
-package_version = '1.2.1'
+version = '1.2.2'
+package_version = '1.2.2'
 
 from packager.view.mainWindow import *
 from packager.model.baseModel import *

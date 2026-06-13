@@ -6,9 +6,11 @@ from pprint import pprint
 from tkinter import filedialog
 from tkinter import simpledialog
 from tkinter import messagebox  # Explicit import for standard messagebox behaviors
+from tkinter import *
 from tkinter.ttk import Treeview, Scrollbar, Frame, Label, Entry, Button, Checkbutton  # Explicit widget assignments
+import tkinter.scrolledtext as st
 
-import tkinter
+import tkinter # kept for explicit module-level calls if needed
 import PIL.Image
 import PIL.ImageTk
 
@@ -20,6 +22,9 @@ from packager.view.renamefileViewer import *
 
 
 class PackageEditorViewer(Frame, Observer):
+    IMAGE_EXTS = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.tiff']
+    TEXT_EXTS = ['.ini', '.txt', '.vbs', '.pov', '.xml', '.json', '.manifest', '.log', '.res']
+
     def __init__(self, window, baseModel, **kwargs):
         Frame.__init__(self, window, width=200, height=100, **kwargs)
         Observer.__init__(self, baseModel.packageEditorModel)
@@ -140,15 +145,25 @@ class PackageEditorViewer(Frame, Observer):
         self.__themeLabelText.grid(column=1, row=8, sticky='NW', columnspan=2, padx=2, pady=0)
         self.__themeLabelText.insert(END, self.packageEditorModel.package.get_field('info/theme'))
 
+        # New: Text content viewer for non-image files (.ini, .txt, etc)
+        self.__textContentViewer = st.ScrolledText(self.__infoFrame, width=44, height=18, font=("Courier", 9))
+        self.__textContentViewer.grid(column=3, row=0, columnspan=4, rowspan=8, sticky='NSEW', padx=50, pady=10)
+        self.__textContentViewer.grid_remove()
+
         self.__imageCanvasViewer = Canvas(self.__infoFrame, width=300, height=300, bg="grey", borderwidth=2)
         self.__imageCanvasViewer.grid(column=3, row=0, columnspan=4, rowspan=8, sticky='NSW', padx=50, pady=10)
 
         # ======================================
         (dataPath, name) = self.packageEditorModel.get_first_image()
         if dataPath is not None:
-            imagePreviewPath = self.__packageEditorModel.package.directory + '/' + \
-                               self.__packageEditorModel.package.name + '/' + \
-                               dataPath + '/' + name
+            # Normalize dataPath in case it contains UI-side PuP Pack keys
+            clean_path = dataPath.replace('PuP Pack', 'PuP').split('/')
+            imagePreviewPath = os.path.normpath(os.path.join(
+                self.__packageEditorModel.package.directory,
+                self.__packageEditorModel.package.name,
+                *clean_path,
+                name
+            ))
         else:
             imagePreviewPath = self.baseModel.base_dir + "images/Super Orbit (Gottlieb 1983).jpg"
 
@@ -280,34 +295,52 @@ class PackageEditorViewer(Frame, Observer):
         self.__packageEditorModel.cancel_edition()
 
     def preview(self, file, path):
-        extension = Path(file).suffix.lower()
-        file_path = self.__packageEditorModel.package.directory + '/' + \
-                    self.__packageEditorModel.package.name + '/' + \
-                    path + '/' + file
+        extension = os.path.splitext(file)[1].lower()
+        
+        # Split path by forward slashes to ensure os.path.join handles components correctly
+        # while also normalizing the 'PuP Pack' alias back to 'PuP'
+        path_parts = path.replace('PuP Pack', 'PuP').split('/')
+        
+        file_path = os.path.normpath(os.path.join(
+            self.__packageEditorModel.package.directory,
+            self.__packageEditorModel.package.name,
+            *path_parts,
+            file
+        ))
 
-        if extension == '.jpg' or extension == '.png' or extension == '.gif':
-            pil_image = PIL.Image.open(file_path)
-            self.__btRotateRight['state'] = 'normal'
-            self.__btRotateLeft['state'] = 'normal'
-        else:
-            # Dynamic lookups for noPreview asset to safeguard relative execution issues
-            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            img_path = os.path.join(base_dir, 'images', 'noPreview.png')
-            if not os.path.exists(img_path):
-                img_path = os.path.join(os.path.dirname(base_dir), 'images', 'noPreview.png')
-                
+        # Reset preview visibility: default to image view
+        self.__textContentViewer.grid_remove()
+        self.__imageCanvasViewer.grid(column=3, row=0, columnspan=4, rowspan=8, sticky='NSW', padx=50, pady=10)
+        self.__btRotateRight['state'] = 'disabled'
+        self.__btRotateLeft['state'] = 'disabled'
+
+        if extension in self.IMAGE_EXTS:
             try:
-                pil_image = PIL.Image.open(img_path)
-            except Exception:
-                pil_image = PIL.Image.new('RGB', (300, 300), color='#2e2e2e')
+                pil_image = PIL.Image.open(file_path)
+                self.__btRotateRight['state'] = 'active'
+                self.__btRotateLeft['state'] = 'active'
                 
-            self.__btRotateRight['state'] = 'disable'
-            self.__btRotateLeft['state'] = 'disable'
-
-        pil_image.thumbnail((300, 300), PIL.Image.Resampling.LANCZOS)
-        tk_image = PIL.ImageTk.PhotoImage(pil_image)
-        self.__imageCanvasViewer.itemconfig(self.__tkImagePreview, image=tk_image)
-        self.__imageCanvasViewer.image = tk_image
+                pil_image.thumbnail((300, 300), PIL.Image.Resampling.LANCZOS)
+                tk_image = PIL.ImageTk.PhotoImage(pil_image)
+                self.__imageCanvasViewer.itemconfig(self.__tkImagePreview, image=tk_image)
+                self.__imageCanvasViewer.image = tk_image
+            except Exception:
+                self._show_no_preview()
+        elif extension in self.TEXT_EXTS:
+            self.__imageCanvasViewer.grid_remove()
+            self.__textContentViewer.grid(column=3, row=0, columnspan=4, rowspan=8, sticky='NSEW', padx=50, pady=10)
+            self.__textContentViewer.config(state='normal')
+            self.__textContentViewer.delete('1.0', END)
+            try:
+                # Use errors='replace' to handle potential encoding artifacts in legacy .ini/.res files
+                with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+                    content = f.read(5000) # Preview first 5KB
+                    self.__textContentViewer.insert(END, content)
+            except Exception as e:
+                self.__textContentViewer.insert(END, f"Error reading file: {e}")
+            self.__textContentViewer.config(state='disabled')
+        else:
+            self._show_no_preview()
 
     def on_select(self, evt):
         item = self.__tree.item(self.__tree.focus())
@@ -485,21 +518,44 @@ class PackageEditorViewer(Frame, Observer):
         item = self.__tree.item(self.__tree.focus())
         self.__packageEditorModel.down_file(self, item['tags'][-1], item['text'])
 
+    def _show_no_preview(self):
+        # Helper to show the fallback image
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        img_path = os.path.join(base_dir, 'images', 'noPreview.png')
+        if not os.path.exists(img_path):
+            img_path = os.path.join(os.path.dirname(base_dir), 'images', 'noPreview.png')
+        try:
+            pil_image = PIL.Image.open(img_path)
+        except Exception:
+            pil_image = PIL.Image.new('RGB', (300, 300), color='#2e2e2e')
+        
+        pil_image.thumbnail((300, 300), PIL.Image.Resampling.LANCZOS)
+        tk_image = PIL.ImageTk.PhotoImage(pil_image)
+        self.__imageCanvasViewer.itemconfig(self.__tkImagePreview, image=tk_image)
+        self.__imageCanvasViewer.image = tk_image
+
     def __rotate_image(self, item, angle: int):
-        item = self.__tree.item(self.__tree.focus())
         if 'file' in item['tags']:
-            file_path = self.__packageEditorModel.package.directory + '/' + \
-                        self.__packageEditorModel.package.name + '/' + \
-                        item['tags'][-1] + '/' + item['text']
+            # disk path normalization
+            clean_path = item['tags'][-1].replace('PuP Pack', 'PuP')
+            file_path = os.path.normpath(os.path.join(
+                self.__packageEditorModel.package.directory,
+                self.__packageEditorModel.package.name,
+                clean_path,
+                item['text']
+            ))
 
-            pil_image = PIL.Image.open(file_path)
-            pil_image = pil_image.rotate(angle, expand=1)
-            pil_image.save(file_path)
+            try:
+                pil_image = PIL.Image.open(file_path)
+                pil_image = pil_image.rotate(angle, expand=1)
+                pil_image.save(file_path)
 
-            pil_image.thumbnail((300, 300), PIL.Image.Resampling.LANCZOS)
-            tk_image = PIL.ImageTk.PhotoImage(pil_image)
-            self.__imageCanvasViewer.itemconfig(self.__tkImagePreview, image=tk_image)
-            self.__imageCanvasViewer.image = tk_image
+                pil_image.thumbnail((300, 300), PIL.Image.Resampling.LANCZOS)
+                tk_image = PIL.ImageTk.PhotoImage(pil_image)
+                self.__imageCanvasViewer.itemconfig(self.__tkImagePreview, image=tk_image)
+                self.__imageCanvasViewer.image = tk_image
+            except Exception as e:
+                logging.error(f"Failed to rotate image: {e}")
 
     def on_rotate_right_image(self) -> None:
         self.__rotate_image(self.__tree.item(self.__tree.focus()), -90)
@@ -544,7 +600,23 @@ class PackageEditorViewer(Frame, Observer):
                                                              values=('', '', ''), open=True)
                         # Prevent duplicate display rows for the same filename
                         seen_files = set()
-                        for element in content[product][category]:
+                        category_items = content[product][category]
+                        
+                        # Safety Limit: Tkinter Treeview crashes/OOMs with thousands of items.
+                        # Collapse display if category (like a massive PuP-Pack) is too large.
+                        MAX_DISPLAY = 2000
+                        
+                        # Priority Optimization: Sort items so directories appear first, then alphabetically by name.
+                        category_items = sorted(category_items, 
+                                             key=lambda x: (x.get('file', {}).get('sha1') != 'directory', 
+                                                            x.get('file', {}).get('name', '').lower()))
+                        
+                        for i, element in enumerate(category_items):
+                            if i >= MAX_DISPLAY:
+                                self.__tree.insert(category_folder, "end", text=f"... and {len(category_items) - MAX_DISPLAY} more files (Display limit reached)",
+                                                             tag=['info', product + '/' + category])
+                                break
+                                
                             if isinstance(element, dict) and element.get('file') is not None:
                                 file = element['file']
                                 # Skip duplicates (same filename) which can appear in merged manifests

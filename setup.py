@@ -6,7 +6,7 @@ import shutil
 #https://fraoustin.fr/old/python_cx_freeze.html
 #https://stackoverflow.com/questions/57184971/available-bdist-msi-options-when-creating-msi-with-cx-freeze
 
-version = "1.2.1"
+version = "1.2.2"
 from packager.help.genHelp import *
 
 # Use sys.base_prefix to find the root of the Python installation (especially for uv/venv)

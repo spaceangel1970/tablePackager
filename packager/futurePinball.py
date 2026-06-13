@@ -85,8 +85,9 @@ class FuturePinball:
 
         try:
             with open(fpt_file, 'rb') as f:
-                binary_content = f.read()
-            
+                # Optimization: Only read the first 10MB. Variable definitions are almost always in the header/script start.
+                binary_content = f.read(10 * 1024 * 1024) 
+
             self.logger.info(f"    + Scanning table script ({len(binary_content)} bytes): {fpt_file.name}")
             
             # Regex to find: uPPack_folder = "FolderName"

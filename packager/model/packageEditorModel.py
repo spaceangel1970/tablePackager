@@ -51,12 +51,14 @@ class PackageEditorModel(Observable):
         return True
 
     def edit_package_end(self, context=None, success=True):
-        if success:
-            self.logger.info("* Unpack Done")
-            self.notify_all(self, events=['<<END_ACTION>>', '<<VIEW EDITOR>>'])  # update listeners
-        else:
-            self.logger.error("* Unpack failed")
-            self.notify_all(self, events=['<<END_ACTION>>'])  # update listeners
+        def dispatch_ui():
+            if success:
+                self.logger.info("* Unpack Done")
+                self.notify_all(self, events=['<<END_ACTION>>', '<<VIEW EDITOR>>'])  # update listeners
+            else:
+                self.logger.error("* Unpack failed")
+                self.notify_all(self, events=['<<END_ACTION>>'])  # update listeners
+        tkinter._default_root.after_idle(dispatch_ui)
 
     def new_package(self, name='New_Table_Package'):
         self.currentPackage = {'name': name}
@@ -109,12 +111,14 @@ class PackageEditorModel(Observable):
             return False
 
     def rename_package_end(self, context=None, success=True):
-        if success:
-            self.logger.info("--[Rename '%s' Done]------------------" % (self.package.name))
-        else:
-            self.logger.error("--[Rename '%s' Failed]------------------" % (self.package.name))
-        self.notify_all(self, events=['<<UPDATE_EDITOR>>', '<<ENABLE_ALL>>'])  # update listeners
-        self.baseModel.packagedTablesModel.update()
+        def dispatch_ui():
+            if success:
+                self.logger.info("--[Rename '%s' Done]------------------" % (self.package.name))
+            else:
+                self.logger.error("--[Rename '%s' Failed]------------------" % (self.package.name))
+            self.notify_all(self, events=['<<UPDATE_EDITOR>>', '<<ENABLE_ALL>>'])  # update listeners
+            self.baseModel.packagedTablesModel.update()
+        tkinter._default_root.after_idle(dispatch_ui)
 
     def cancel_edition(self):
         if not self.__currentPackage:  # empty selection
@@ -125,7 +129,8 @@ class PackageEditorModel(Observable):
                                       '<<ENABLE_ALL>>'])  # update listeners
 
     def update_package(self, selection=None):
-        self.package.update()
+        # Optimization: Do NOT call self.package.update() here.
+        # Reloading from disk overwrites in-memory manifest changes that haven't been saved yet.
         self.notify_all(self, events=['<<UPDATE_EDITOR>>'], selection_set=selection)  # update listeners
 
     def add_ultradmd(self, viewer, dataPath, src_dir):
