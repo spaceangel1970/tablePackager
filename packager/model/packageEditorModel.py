@@ -1,3 +1,4 @@
+import logging
 import tkinter
 
 from packager.model.baseModel import *
@@ -77,6 +78,30 @@ class PackageEditorModel(Observable):
     def pack_package_begin(self, context=None):
         for key, val in context.items():
             self.package.set_field(key, val)
+
+        # --- SESSION LOG CAPTURE ---
+        # Ensure manual builds and edits also include the process log for debugging
+        log_path = self.baseModel.log_path
+        if os.path.exists(log_path):
+            self.logger.info("* Capturing session log snapshot")
+            # Flush log handlers to ensure all entries are committed to disk
+            for handler in logging.root.handlers:
+                if hasattr(handler, 'flush'): handler.flush()
+            
+            snap_path = os.path.join(self.baseModel.tmp_path, 'Log_Snapshot.txt')
+            try:
+                with open(log_path, 'r', encoding='utf-8', errors='ignore') as f_in:
+                    log_data = f_in.read(10 * 1024 * 1024) # Limit snapshot to 10MB
+                with open(snap_path, 'w', encoding='utf-8') as f_out:
+                    f_out.write(log_data)
+                
+                # Determine log category based on package content
+                log_dst = 'visual pinball/logs'
+                if self.package.get_field('future pinball/Tables'):
+                    log_dst = 'future pinball/logs'
+                self.package.add_file(snap_path, log_dst, dst_file='Log.txt')
+            except Exception as e:
+                self.logger.warning(f"Could not capture log snapshot: {e}")
 
         self.package.save()
         self.package.pack()
