@@ -33,9 +33,13 @@ class FlexDMD:
             flexDMDDir = str(Path(flexDMDItem).name)
             flexDMDStem = str(Path(flexDMDItem).stem)
             score = searchSentenceInString(flexDMDStem, table_name)
+            
+            # Auto-proceed if score > 0.2
             if score > 0.2:
-                self.logger.info(f"+ Auto-detected and adding FlexDMD: '{flexDMDDir}' (score={score:.2f})")
+                self.logger.info(f"[FlexDMD Scan] Match found: '{flexDMDDir}' (Score: {score:.2f})")
                 package.set_field('visual pinball/info/flexDMD', flexDMDDir)
+                
+                self.logger.info(f"[FlexDMD Scan] Indexing files for {flexDMDDir}...")
                 for file in Path(flexDMDItem).glob('**/*'):
                     if file.is_file():
                         rel_path = file.relative_to(flexDMDItem)
@@ -45,17 +49,18 @@ class FlexDMD:
                 vpinmame_base = os.path.abspath(os.path.join(self.baseModel.visual_pinball_path, 'VPinMAME'))
                 dmd_ini_path = os.path.join(vpinmame_base, 'DmdDevice.ini')
                 if os.path.exists(dmd_ini_path):
+                    self.logger.info(f"[FlexDMD Scan] Searching DmdDevice.ini for section: [{flexDMDStem}]")
                     try:
                         with open(dmd_ini_path, 'r', encoding='utf-8', errors='ignore') as f:
                             ini_lines = f.readlines()
-                        target_header = f"[{flexDMDStem.lower().strip()}]"
+                        target_prefix = f"[{flexDMDStem.lower().strip()}"
                         captured_lines = []
                         inside_block = False
                         for line in ini_lines:
                             clean = line.strip().lower()
                             if clean.startswith('[') and clean.endswith(']'):
                                 if inside_block: break
-                                if clean == target_header: inside_block = True
+                                if clean.startswith(target_prefix): inside_block = True
                             if inside_block: captured_lines.append(line)
                         if captured_lines:
                             vpm_dest_dir = os.path.join(package.directory, package.name, 'VPinMAME')
@@ -63,7 +68,9 @@ class FlexDMD:
                             with open(os.path.join(vpm_dest_dir, 'DmdDevice.ini'), 'w', encoding='utf-8') as f_out:
                                 f_out.writelines(captured_lines)
                             package.set_field('visual pinball/info/has_custom_dmd', 'Yes')
-                            self.logger.info(f"++ Sliced DmdDevice.ini settings for FlexDMD: {flexDMDStem}")
+                            self.logger.info(f"[FlexDMD Scan] ++ Successfully sliced and saved DmdDevice.ini block for {flexDMDStem}")
+                        else:
+                            self.logger.info(f"[FlexDMD Scan] -- No matching section [{flexDMDStem}] found in DmdDevice.ini")
                     except Exception as e:
                         self.logger.error(f"[FlexDMD/DMD LOG] Error slicing DmdDevice.ini: {e}")
 
@@ -106,8 +113,6 @@ class FlexDMD:
             for flexDMDItem in tablePath.glob('**/*.FlexDMD'):
                 flexDMDDir = str(Path(flexDMDItem).name)
                 score = searchSentenceInString(str(Path(flexDMDItem).stem), table_name)
-                self.logger.info(
-                    "+ Looking for FlexDMD '%s' (score=%02f)" % (flexDMDDir, score))
                 if score > 0.2:
                     self.logger.info("- Remove FlexDMD dir '%s'" % flexDMDDir)
                     shutil.rmtree(flexDMDItem)

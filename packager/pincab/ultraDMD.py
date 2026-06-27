@@ -48,14 +48,14 @@ class UltraDMD:
                     try:
                         with open(dmd_ini_path, 'r', encoding='utf-8', errors='ignore') as f:
                             ini_lines = f.readlines()
-                        target_header = f"[{ultraDMDStem.lower().strip()}]"
+                        target_prefix = f"[{ultraDMDStem.lower().strip()}"
                         captured_lines = []
                         inside_block = False
                         for line in ini_lines:
                             clean = line.strip().lower()
                             if clean.startswith('[') and clean.endswith(']'):
                                 if inside_block: break
-                                if clean == target_header: inside_block = True
+                                if clean.startswith(target_prefix): inside_block = True
                             if inside_block: captured_lines.append(line)
                         if captured_lines:
                             vpm_dest_dir = os.path.join(package.directory, package.name, 'VPinMAME')
