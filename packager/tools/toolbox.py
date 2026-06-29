@@ -223,6 +223,16 @@ def unsuffix(path):
     return path_obj.name.split('.')[0]
 
 
+def build_target_filename(filename: str, required_name: str) -> str:
+    path_obj = Path(filename)
+    suffix = path_obj.suffix
+    if not required_name:
+        return path_obj.name
+    if suffix:
+        return f"{required_name}{suffix}"
+    return required_name
+
+
 def is_suffix(filename: str, suffix: str) -> bool:
     return suffix in Path(filename).suffixes
 

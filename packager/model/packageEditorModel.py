@@ -259,8 +259,7 @@ class PackageEditorModel(Observable):
                     rename_it = Path(filename).stem.upper() != required_name.upper()
 
             if rename_it:
-                suffixes = Path(filename).suffixes
-                new_name = required_name + ''.join(suffixes)
+                new_name = build_target_filename(filename, required_name)
                 if not tkinter.messagebox.askokcancel("Renaming File",
                                                       "The name of the file must be the same as package name. New name file will be %s." % new_name,
                                                       parent=viewer):
