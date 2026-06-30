@@ -1,5 +1,19 @@
 # Table Packager Release Notes
 
+## What's New in Version 1.2.3
+
+/!\ You must uninstall current version before install a new one /!\
+### What's New
+
+- Nothing new at this point
+
+### Bug Fixes
+
+- Fixed manual table entries 
+- Fixed POV ini naming
+
+# Table Packager Release Notes
+
 ## What's New in Version 1.2.1
 
 /!\ You must uninstall current version before install a new one /!\
